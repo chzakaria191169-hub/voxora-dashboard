@@ -536,6 +536,119 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
 }
 
 /* ═══════════════════════════════════════════════════════════
+   INBOX PAGE
+   ═══════════════════════════════════════════════════════════ */
+function InboxPage() {
+  const [replies, setReplies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAccount, setSelectedAccount] = useState('All');
+  const [selectedMsgId, setSelectedMsgId] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('leads')
+        .select('*')
+        .not('reply_message', 'is', null)
+        .order('replied_at', { ascending: false, nullsFirst: false });
+      if (data) setReplies(data);
+      setLoading(false);
+    })();
+  }, []);
+
+  const accounts = ['All', ...new Set(replies.map(r => r.sender).filter(Boolean))];
+  const filtered = selectedAccount === 'All' ? replies : replies.filter(r => r.sender === selectedAccount);
+  const selectedMsg = replies.find(r => r.id === selectedMsgId);
+
+  return (
+    <motion.div className="inbox-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      {/* Sidebar: Accounts */}
+      <div className="inbox-sidebar">
+        <div className="inbox-sidebar-header">Inboxes</div>
+        <div className="inbox-sidebar-list">
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>Loading...</div>
+          ) : (
+            accounts.map(acc => {
+              const count = acc === 'All' ? replies.length : replies.filter(r => r.sender === acc).length;
+              return (
+                <button
+                  key={acc}
+                  className={`inbox-account-btn ${selectedAccount === acc ? 'inbox-account-btn--active' : ''}`}
+                  onClick={() => { setSelectedAccount(acc); setSelectedMsgId(null); }}
+                >
+                  <div className="inbox-account-dot" />
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{acc}</span>
+                  <span style={{ opacity: 0.6, fontSize: 11 }}>{count}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Middle: Message List */}
+      <div className="inbox-list">
+        <div className="inbox-list-scroll">
+          {filtered.length === 0 && !loading && (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>No replies found.</div>
+          )}
+          {filtered.map(msg => (
+            <div
+              key={msg.id}
+              className={`inbox-msg-card ${selectedMsgId === msg.id ? 'inbox-msg-card--active' : ''}`}
+              onClick={() => setSelectedMsgId(msg.id)}
+            >
+              <div className="inbox-msg-head">
+                <span className="inbox-msg-name">{msg.name || 'Unknown'}</span>
+                <span className="inbox-msg-time">
+                  {msg.replied_at ? new Date(msg.replied_at).toLocaleDateString() : ''}
+                </span>
+              </div>
+              <div className="inbox-msg-company">
+                <Building2 size={12} /> {msg.company || 'Unknown Company'}
+              </div>
+              <div className="inbox-msg-snippet">
+                {msg.reply_message}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: Message Detail */}
+      <div className="inbox-detail">
+        {selectedMsg ? (
+          <>
+            <div className="inbox-detail-header">
+              <div className="inbox-detail-name">{selectedMsg.name}</div>
+              <div className="inbox-detail-meta">
+                <span><Mail size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }}/> {selectedMsg.email}</span>
+                <span><Building2 size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }}/> {selectedMsg.company}</span>
+                <span className="niche-tag" style={{ marginTop: 0 }}>{selectedMsg.niche}</span>
+              </div>
+              <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="status-dot" style={{ background: 'var(--emerald)' }} />
+                Received by: <strong style={{ color: 'var(--text-2)' }}>{selectedMsg.sender}</strong>
+              </div>
+            </div>
+            <div className="inbox-detail-body">
+              {selectedMsg.reply_message}
+            </div>
+          </>
+        ) : (
+          <div className="inbox-detail-empty">
+            <Inbox size={48} style={{ opacity: 0.2 }} />
+            <div>Select a message to read</div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    APP ROOT
    ═══════════════════════════════════════════════════════════ */
 export default function App() {
@@ -604,7 +717,7 @@ export default function App() {
       case 'analytics':
         return <ComingSoonPage icon={<BarChart2 size={40} />} title="Analytics" desc="Deep dive into open rates, click rates, reply rates, and campaign performance over time. Connected to your n8n workflows." />;
       case 'inbox':
-        return <ComingSoonPage icon={<Inbox size={40} />} title="Inbox" desc="Monitor all SMTP inboxes, see replies in real-time, and manage conversations directly from the dashboard." />;
+        return <InboxPage />;
       case 'agents':
         return <ComingSoonPage icon={<Bot size={40} />} title="AI Agents" desc="Configure and monitor your AI agents — reply detection, follow-up engine, archive cleaner, and more." />;
       case 'automations':
