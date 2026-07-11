@@ -1889,3 +1889,306 @@ body {
   width: 100vw !important;
   height: 100vh !important;
 }
+
+/* ============== STICKY INTEL COLUMN ============== */
+.leads-table {
+  overflow-x: auto;
+}
+.col-sticky {
+  position: sticky;
+  right: 0;
+  background: var(--bg-deep);
+  z-index: 2;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
+}
+thead .col-sticky {
+  background: rgba(7, 7, 21, 0.98);
+}
+tbody tr:hover .col-sticky {
+  background: rgba(139, 92, 246, 0.06);
+}
+
+/* ============== INBOX PAGE UPGRADES ============== */
+
+.inbox-sidebar {
+  background: rgba(7, 7, 21, 0.7) !important;
+}
+
+.inbox-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.inbox-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--purple-bright);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Inbox list header */
+.inbox-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* New reply indicator dot */
+.inbox-new-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--cyan);
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--cyan); }
+  50%       { opacity: 0.5; box-shadow: 0 0 14px var(--cyan); }
+}
+
+/* Intent pill in message list */
+.inbox-intent-pill {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 0.05em;
+  margin-left: auto;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+/* Inbox message card upgrade */
+.inbox-msg-company {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+/* Empty state */
+.inbox-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.inbox-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+/* ---- Detail panel upgrades ---- */
+.inbox-detail-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.inbox-detail-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-1);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.inbox-detail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.inbox-detail-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* AI Analysis Section */
+.inbox-ai-analysis {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(139, 92, 246, 0.03);
+  flex-shrink: 0;
+}
+
+.inbox-ai-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.inbox-ai-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.inbox-ai-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 0.04em;
+  font-family: 'Space Grotesk', monospace;
+}
+
+.inbox-score-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.inbox-score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Context section (our outreach) */
+.inbox-context-wrap {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+  flex-shrink: 0;
+}
+
+.inbox-context-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.inbox-context-body {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.6;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+/* Reply wrap */
+.inbox-reply-wrap {
+  padding: 16px 20px;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Quick action buttons */
+.inbox-actions {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(4, 4, 15, 0.4);
+  flex-shrink: 0;
+}
+
+.inbox-action-row {
+  display: flex;
+  gap: 8px;
+}
+
+.inbox-action-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.inbox-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inbox-action-btn--green {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--emerald);
+}
+.inbox-action-btn--green:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+}
+
+.inbox-action-btn--purple {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: var(--purple-bright);
+}
+.inbox-action-btn--purple:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.25);
+}
+
+.inbox-action-btn--red {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--red);
+}
+.inbox-action-btn--red:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.2);
+}

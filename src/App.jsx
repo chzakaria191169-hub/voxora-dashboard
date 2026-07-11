@@ -1065,7 +1065,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
         <thead>
           <tr>
             <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Niche</th><th>Last Sent</th><th style={{ textAlign: 'center' }}>Intel</th>
+            <th>Status</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center' }}>Intel</th>
           </tr>
         </thead>
         <tbody>
@@ -1091,7 +1091,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
                 <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
                   {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
                 </td>
-                <td style={{ textAlign: 'center' }}>
+                <td className="col-sticky" style={{ textAlign: 'center' }}>
                   <button
                     className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
                     onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
@@ -1222,50 +1222,102 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
 }
 
 /* ═══════════════════════════════════════════════════════════
-   INBOX PAGE
+   INBOX PAGE — FULL CINEMATIC + FUNCTIONAL SIGNAL CENTER
    ═══════════════════════════════════════════════════════════ */
 function InboxPage() {
   const [replies, setReplies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState('All');
   const [selectedMsgId, setSelectedMsgId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [scrambleTrigger, setScrambleTrigger] = useState(0);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('scraped_leads')
-        .select('*')
-        .eq('status', 'replied')
-        .order('replied_at', { ascending: false, nullsFirst: false });
-      if (data) setReplies(data);
-      setLoading(false);
-    })();
+  const loadReplies = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('scraped_leads')
+      .select('*')
+      .eq('status', 'replied')
+      .order('replied_at', { ascending: false, nullsFirst: false });
+    if (data) setReplies(data);
+    setLoading(false);
   }, []);
 
-  const accounts = ['All', ...new Set(replies.map(r => r.sender).filter(Boolean))];
-  const filtered = selectedAccount === 'All' ? replies : replies.filter(r => r.sender === selectedAccount);
+  useEffect(() => { loadReplies(); }, [loadReplies]);
+
+  // Realtime subscription — new replies appear instantly
+  useEffect(() => {
+    const channel = supabase
+      .channel('inbox-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'scraped_leads',
+        filter: 'status=eq.replied'
+      }, () => { loadReplies(); })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [loadReplies]);
+
+  const accounts = ['All', ...new Set(replies.map(r => r.cold_email_sender || r.sender).filter(Boolean))];
+  const filtered = selectedAccount === 'All'
+    ? replies
+    : replies.filter(r => (r.cold_email_sender || r.sender) === selectedAccount);
   const selectedMsg = replies.find(r => r.id === selectedMsgId);
+
+  // Quick action: update lead status in Supabase
+  const handleAction = useCallback(async (id, newStatus) => {
+    setUpdatingId(id);
+    await supabase.from('scraped_leads').update({ status: newStatus }).eq('id', id);
+    setReplies(prev => prev.filter(r => r.id !== id));
+    setSelectedMsgId(null);
+    setUpdatingId(null);
+  }, []);
+
+  // AI intent scoring based on reply content
+  const getAIIntent = (msg) => {
+    const text = (msg.reply_message || '').toLowerCase();
+    if (!text) return { label: 'Unknown', score: 0, color: 'var(--text-3)' };
+    const positive = ['interest', 'yes', 'call', 'meeting', 'schedule', 'tell me more', 'sounds good', 'let\'s', 'when', 'available', 'book', 'demo', 'love to', 'great', 'perfect'];
+    const negative = ['not interest', 'unsubscribe', 'remove', 'stop', 'no thanks', 'not looking', 'don\'t contact', 'do not'];
+    const posCount = positive.filter(w => text.includes(w)).length;
+    const negCount = negative.filter(w => text.includes(w)).length;
+    if (negCount > 0) return { label: 'Not Interested', score: Math.max(5, 30 - negCount * 15), color: 'var(--red)' };
+    if (posCount >= 3) return { label: 'Hot Lead 🔥', score: Math.min(98, 75 + posCount * 5), color: 'var(--emerald)' };
+    if (posCount >= 1) return { label: 'Positive Signal', score: Math.min(85, 55 + posCount * 10), color: 'var(--cyan)' };
+    return { label: 'Neutral', score: 45, color: 'var(--amber)' };
+  };
 
   return (
     <motion.div className="inbox-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-      <div className="inbox-sidebar">
-        <div className="inbox-sidebar-header">Inboxes</div>
+
+      {/* COLUMN 1: Sender accounts */}
+      <div className="inbox-sidebar glass-card" style={{ borderRadius: 14 }}>
+        <div className="inbox-sidebar-header">
+          <span>📡 SMTP Inboxes</span>
+          <span style={{ fontSize: 10, color: 'var(--emerald)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className="pulse-dot" />Live
+          </span>
+        </div>
         <div className="inbox-sidebar-list">
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>Loading...</div>
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: 36, borderRadius: 8, marginBottom: 6 }} />
+            ))
           ) : (
             accounts.map(acc => {
-              const count = acc === 'All' ? replies.length : replies.filter(r => r.sender === acc).length;
+              const count = acc === 'All' ? replies.length : replies.filter(r => (r.cold_email_sender || r.sender) === acc).length;
               return (
                 <button
                   key={acc}
                   className={`inbox-account-btn ${selectedAccount === acc ? 'inbox-account-btn--active' : ''}`}
                   onClick={() => { setSelectedAccount(acc); setSelectedMsgId(null); }}
                 >
-                  <div className="inbox-account-dot" />
-                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{acc}</span>
-                  <span style={{ opacity: 0.6, fontSize: 11 }}>{count}</span>
+                  <div className="inbox-account-dot" style={{ background: selectedAccount === acc ? 'var(--cyan)' : undefined }} />
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 12 }}>
+                    {acc === 'All' ? '🌐 All Inboxes' : acc}
+                  </span>
+                  {count > 0 && <span className="inbox-count-badge">{count}</span>}
                 </button>
               );
             })
@@ -1273,57 +1325,203 @@ function InboxPage() {
         </div>
       </div>
 
-      <div className="inbox-list">
+      {/* COLUMN 2: Message list */}
+      <div className="inbox-list glass-card" style={{ borderRadius: 14, padding: 0, overflow: 'hidden' }}>
+        <div className="inbox-list-header">
+          <span>💬 Replies</span>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{filtered.length} messages</span>
+        </div>
         <div className="inbox-list-scroll">
-          {filtered.length === 0 && !loading && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>No replies found.</div>
+          {loading && (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+                <div className="skeleton" style={{ height: 14, width: '60%', borderRadius: 6, marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 11, width: '40%', borderRadius: 6 }} />
+              </div>
+            ))
           )}
-          {filtered.map(msg => (
-            <div
-              key={msg.id}
-              className={`inbox-msg-card ${selectedMsgId === msg.id ? 'inbox-msg-card--active' : ''}`}
-              onClick={() => setSelectedMsgId(msg.id)}
-            >
-              <div className="inbox-msg-head">
-                <span className="inbox-msg-name">{msg.name || 'Unknown'}</span>
-                <span className="inbox-msg-time">
-                  {msg.replied_at ? new Date(msg.replied_at).toLocaleDateString() : ''}
-                </span>
-              </div>
-              <div className="inbox-msg-company">
-                <Building2 size={12} /> {msg.company || 'Unknown Company'}
-              </div>
-              <div className="inbox-msg-snippet">
-                {msg.reply_message}
-              </div>
+          {!loading && filtered.length === 0 && (
+            <div className="inbox-empty-state">
+              <Inbox size={40} style={{ opacity: 0.15, marginBottom: 12 }} />
+              <div style={{ fontSize: 13, color: 'var(--text-3)' }}>No replies in this inbox</div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>Waiting for signals...</div>
             </div>
-          ))}
+          )}
+          {filtered.map(msg => {
+            const intent = getAIIntent(msg);
+            const name = msg.first_name || msg.name || 'Unknown';
+            const company = msg.company_name || msg.company || 'Unknown Company';
+            const snippet = (msg.reply_message || '').slice(0, 80);
+            const isNew = msg.replied_at && (Date.now() - new Date(msg.replied_at).getTime()) < 86400000;
+            return (
+              <div
+                key={msg.id}
+                className={`inbox-msg-card ${selectedMsgId === msg.id ? 'inbox-msg-card--active' : ''}`}
+                onClick={() => { setSelectedMsgId(msg.id); setScrambleTrigger(t => t + 1); }}
+              >
+                <div className="inbox-msg-head">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isNew && <span className="inbox-new-dot" />}
+                    <span className="inbox-msg-name">{name}</span>
+                  </div>
+                  <span className="inbox-msg-time">
+                    {msg.replied_at ? new Date(msg.replied_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : ''}
+                  </span>
+                </div>
+                <div className="inbox-msg-company">
+                  <Building2 size={11} style={{ opacity: 0.5, flexShrink: 0 }} />
+                  <span>{company}</span>
+                  <span className="inbox-intent-pill" style={{ color: intent.color, borderColor: intent.color }}>
+                    {intent.label}
+                  </span>
+                </div>
+                {snippet && (
+                  <div className="inbox-msg-snippet">{snippet}{snippet.length >= 80 ? '...' : ''}</div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="inbox-detail">
+      {/* COLUMN 3: Message detail */}
+      <div className="inbox-detail glass-card" style={{ borderRadius: 14, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {selectedMsg ? (
-          <>
-            <div className="inbox-detail-header">
-              <div className="inbox-detail-name">{selectedMsg.name}</div>
-              <div className="inbox-detail-meta">
-                <span><Mail size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} /> {selectedMsg.email}</span>
-                <span><Building2 size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} /> {selectedMsg.company}</span>
-                <span className="niche-tag" style={{ marginTop: 0 }}>{selectedMsg.niche}</span>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedMsg.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+            >
+              {/* Detail Header */}
+              <div className="inbox-detail-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div className="intel-avatar" style={{ width: 38, height: 38, fontSize: 16 }}>
+                    {(selectedMsg.first_name || selectedMsg.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="inbox-detail-name">{selectedMsg.first_name || selectedMsg.name || '—'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{selectedMsg.job_title || 'Contact'}</div>
+                  </div>
+                </div>
+                <div className="inbox-detail-meta">
+                  <span><Mail size={11} style={{ opacity: 0.5 }} />{selectedMsg.email}</span>
+                  <span><Building2 size={11} style={{ opacity: 0.5 }} />{selectedMsg.company_name || selectedMsg.company || '—'}</span>
+                  {(selectedMsg.niche_tag || selectedMsg.niche) && (
+                    <span className="niche-tag" style={{ marginTop: 0 }}>{selectedMsg.niche_tag || selectedMsg.niche}</span>
+                  )}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="status-dot" style={{ background: 'var(--emerald)' }} />
+                  Received by: <strong style={{ color: 'var(--text-2)' }}>{selectedMsg.cold_email_sender || selectedMsg.sender || '—'}</strong>
+                  {selectedMsg.replied_at && (
+                    <span style={{ marginLeft: 'auto' }}>
+                      <Clock size={10} style={{ opacity: 0.5, marginRight: 3, verticalAlign: 'middle' }} />
+                      {new Date(selectedMsg.replied_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="status-dot" style={{ background: 'var(--emerald)' }} />
-                Received by: <strong style={{ color: 'var(--text-2)' }}>{selectedMsg.sender}</strong>
+
+              {/* AI Intent Analysis Bar */}
+              {(() => {
+                const intent = getAIIntent(selectedMsg);
+                return (
+                  <div className="inbox-ai-analysis">
+                    <div className="inbox-ai-label">
+                      <Bot size={11} />
+                      <span>AI SIGNAL ANALYSIS</span>
+                    </div>
+                    <div className="inbox-ai-chips">
+                      <span className="inbox-ai-chip" style={{ color: intent.color, borderColor: intent.color }}>
+                        Intent: {intent.label}
+                      </span>
+                      <span className="inbox-ai-chip" style={{ color: 'var(--purple)', borderColor: 'var(--purple)' }}>
+                        Score: {intent.score}%
+                      </span>
+                      {selectedMsg.niche_tag && (
+                        <span className="inbox-ai-chip" style={{ color: 'var(--cyan)', borderColor: 'var(--cyan)' }}>
+                          Niche: {selectedMsg.niche_tag}
+                        </span>
+                      )}
+                      {selectedMsg.job_title && (
+                        <span className="inbox-ai-chip" style={{ color: 'var(--amber)', borderColor: 'var(--amber)' }}>
+                          {selectedMsg.job_title}
+                        </span>
+                      )}
+                    </div>
+                    <div className="inbox-score-bar">
+                      <div className="inbox-score-fill" style={{ width: `${intent.score}%`, background: intent.color }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Context: our outreach message */}
+              {(selectedMsg.cold_email_subject || selectedMsg.cold_email_body) && (
+                <div className="inbox-context-wrap">
+                  <div className="inbox-context-label">📤 Our Original Outreach</div>
+                  {selectedMsg.cold_email_subject && (
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
+                      Subject: <span style={{ color: 'var(--text-2)' }}>{selectedMsg.cold_email_subject}</span>
+                    </div>
+                  )}
+                  {selectedMsg.cold_email_body && (
+                    <div className="inbox-context-body">{selectedMsg.cold_email_body.slice(0, 200)}{selectedMsg.cold_email_body.length > 200 ? '...' : ''}</div>
+                  )}
+                </div>
+              )}
+
+              {/* Reply body with CyberScramble */}
+              <div className="inbox-reply-wrap" style={{ flex: 1, overflow: 'auto' }}>
+                <div className="inbox-context-label" style={{ color: 'var(--emerald)', marginBottom: 10 }}>💬 Their Reply</div>
+                <div className="inbox-detail-body" style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 10, padding: 16, minHeight: 80 }}>
+                  {selectedMsg.reply_message
+                    ? <CyberScramble text={selectedMsg.reply_message} trigger={scrambleTrigger} duration={600} />
+                    : <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No reply text stored yet.</span>
+                  }
+                </div>
               </div>
-            </div>
-            <div className="inbox-detail-body">
-              {selectedMsg.reply_message}
-            </div>
-          </>
+
+              {/* Quick Action Buttons */}
+              <div className="inbox-actions">
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Quick Actions</div>
+                <div className="inbox-action-row">
+                  <button
+                    className="inbox-action-btn inbox-action-btn--green"
+                    disabled={updatingId === selectedMsg.id}
+                    onClick={() => handleAction(selectedMsg.id, 'interested')}
+                  >
+                    ✅ Mark Interested
+                  </button>
+                  <button
+                    className="inbox-action-btn inbox-action-btn--purple"
+                    disabled={updatingId === selectedMsg.id}
+                    onClick={() => handleAction(selectedMsg.id, 'meeting_booked')}
+                  >
+                    📅 Meeting Booked
+                  </button>
+                  <button
+                    className="inbox-action-btn inbox-action-btn--red"
+                    disabled={updatingId === selectedMsg.id}
+                    onClick={() => handleAction(selectedMsg.id, 'archived')}
+                  >
+                    🗑️ Archive
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="inbox-detail-empty">
-            <Inbox size={48} style={{ opacity: 0.2 }} />
-            <div>Select a message to read</div>
+            <div className="inbox-empty-icon">
+              <Inbox size={36} style={{ opacity: 0.3 }} />
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 12 }}>Select a reply to analyze</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4, opacity: 0.6 }}>AI intent analysis will appear here</div>
           </div>
         )}
       </div>
