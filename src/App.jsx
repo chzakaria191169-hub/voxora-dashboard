@@ -890,6 +890,7 @@ export default function App() {
   const [campaign, setCampaign] = useState(null);
   const [stats, setStats] = useState({ total: 0, sent: 0, followups: 0, replied: 0, interested: 0, meeting_booked: 0, archived: 0 });
   const [leads, setLeads] = useState([]);
+  const [selectedLead, setSelectedLead] = useState(null);
 
   // Load all campaigns on mount
   useEffect(() => {
@@ -997,6 +998,11 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
         </div>
+        <AnimatePresence>
+          {selectedLead && (
+            <LeadIntelPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
