@@ -646,11 +646,15 @@ function Sidebar({ activePage, onNavigate }) {
 
   return (
     <motion.div className="sidebar" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4 }}>
-      <div className="sidebar-logo" style={{ marginBottom: 40, marginTop: 10 }}>
+      <div className="sidebar-logo" style={{ marginBottom: 36, marginTop: 4, gap: 10 }}>
         <div className="logo-icon-glass">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-1)' }}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#A78BFA' }}>
             <path d="M4 4l8 16 8-16" />
           </svg>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <span className="logo-text">VOXORA</span>
+          <span className="logo-subtext">COMMAND CENTER</span>
         </div>
       </div>
       <span className="nav-section-label">Navigation</span>
@@ -737,7 +741,39 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 
   return (
     <div className="content">
-      {/* KPI CARDS (Hero Banner Removed for cinematic immediate focus) */}
+      {/* HERO — CINEMATIC COMMAND CENTER */}
+      <motion.div
+        className="hero-banner"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+      >
+        {/* Label row */}
+        <div className="hero-greeting">AI Automation Command Center</div>
+
+        {/* Main shimmer title */}
+        <div className="hero-title">Your Pipeline, Automated</div>
+
+        {/* Scanner line */}
+        <div className="hero-scanner">
+          <div className="hero-scanner-track" />
+        </div>
+
+        {/* Subtitle */}
+        <div className="hero-subtitle">
+          Real-time intelligence. Every lead tracked, every follow-up automated,
+          every reply detected &mdash; all running silently in the background.
+        </div>
+
+        {/* Live status dots */}
+        <div className="hero-status-row">
+          <div className="hero-status-dot green"><span />Agents Online</div>
+          <div className="hero-status-dot cyan"><span />20 Inboxes Active</div>
+          <div className="hero-status-dot purple"><span />Outbound Live</div>
+        </div>
+      </motion.div>
+
+      {/* KPI CARDS */}
       <div className="metrics-grid">
         <MetricCard label="Total Leads" value={stats.total} icon={<Users size={14} />} variant="purple" badge={`${stats.total - stats.archived} active`} sub="in pipeline" loading={loading} idx={0} />
         <MetricCard label="Emails Sent" value={stats.sent + stats.followups + stats.replied + stats.interested + stats.meeting_booked} icon={<Send size={14} />} variant="cyan" badge="Delivered" sub="across 20 inboxes" loading={loading} idx={1} />
