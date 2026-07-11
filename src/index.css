@@ -81,8 +81,8 @@ body {
   padding: 28px 16px;
   border-right: 1px solid var(--border);
   background: rgba(4, 4, 15, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+/* removed backdrop filter to fix GPU glitch */
+/* removed backdrop filter to fix GPU glitch */
   position: relative;
   z-index: 10;
   overflow-y: auto;
@@ -222,7 +222,7 @@ body {
   height: 68px;
   border-bottom: 1px solid var(--border);
   background: rgba(4, 4, 15, 0.7);
-  backdrop-filter: blur(24px);
+/* removed backdrop filter to fix GPU glitch */
   flex-shrink: 0;
 }
 
@@ -351,8 +351,8 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* removed backdrop filter to fix GPU glitch */
+/* removed backdrop filter to fix GPU glitch */
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -673,7 +673,7 @@ body {
   border-radius: 12px;
   padding: 6px;
   z-index: 100;
-  backdrop-filter: blur(24px);
+/* removed backdrop filter to fix GPU glitch */
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
@@ -1036,8 +1036,8 @@ body {
   inset: 0;
   z-index: 999;
   background: rgba(4, 4, 15, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* removed backdrop filter to fix GPU glitch */
+/* removed backdrop filter to fix GPU glitch */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1391,7 +1391,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+/* removed backdrop filter to fix GPU glitch */
   z-index: 1000;
 }
 
@@ -1403,8 +1403,8 @@ body {
   width: 460px;
   max-width: 90vw;
   background: rgba(10, 10, 20, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+/* removed backdrop filter to fix GPU glitch */
+/* removed backdrop filter to fix GPU glitch */
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
   z-index: 1001;
