@@ -667,7 +667,11 @@ function LeadsPage({ leads, loading, campaign }) {
   const niches = ['all', ...new Set(leads.map(l => l.niche_tag || l.niche).filter(Boolean))];
 
   const filtered = leads.filter(l => {
-    const matchSearch = !search || l.first_name?.toLowerCase().includes(search.toLowerCase()) || l.company_name?.toLowerCase().includes(search.toLowerCase()) || l.company?.toLowerCase().includes(search.toLowerCase()) || l.email?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || 
+      (l.first_name || '').toLowerCase().includes(search.toLowerCase()) || 
+      (l.company_name || '').toLowerCase().includes(search.toLowerCase()) || 
+      (l.company || '').toLowerCase().includes(search.toLowerCase()) || 
+      (l.email || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || l.status === statusFilter;
     const matchNiche = nicheFilter === 'all' || l.niche_tag === nicheFilter || l.niche === nicheFilter;
     return matchSearch && matchStatus && matchNiche;
