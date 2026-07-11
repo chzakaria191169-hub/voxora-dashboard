@@ -1727,3 +1727,165 @@ body {
   color: var(--cyan);
   border-bottom-color: var(--cyan);
 }
+
+/* ============== SYSTEM TICKER ============== */
+.system-ticker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 28px;
+  background: rgba(4, 4, 15, 0.92);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-track {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-block;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(139, 92, 246, 0.7);
+  animation: ticker-scroll 35s linear infinite;
+  text-transform: uppercase;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Push layout down for the ticker */
+.layout {
+  padding-top: 28px;
+}
+
+/* ============== CINEMATIC ROW ============== */
+.cinematic-row {
+  display: grid;
+  grid-template-columns: 420px 1fr 280px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.globe-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============== MATRIX GLOBE ============== */
+.matrix-globe-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 0;
+}
+
+.matrix-globe-canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============== BRAIN FEED ============== */
+.brain-feed {
+  padding: 0;
+}
+
+.brain-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brain-feed-title {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-2);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.brain-feed-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  text-transform: uppercase;
+}
+
+.brain-feed-body {
+  padding: 12px 20px 16px;
+  height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+.brain-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  animation: brain-line-in 0.3s ease;
+}
+
+@keyframes brain-line-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.brain-ts {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.brain-tag {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.brain-msg {
+  color: var(--text-2);
+  font-family: monospace;
+  font-size: 11px;
+  word-break: break-word;
+}
+
+/* ============== CANVAS-BG UPGRADE ============== */
+.canvas-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  width: 100vw !important;
+  height: 100vh !important;
+}

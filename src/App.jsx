@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -17,48 +17,498 @@ import './index.css';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 /* ═══════════════════════════════════════════════════════════
-   PARTICLE CANVAS
+   VOXORA AI NETWORK CANVAS — exact DNA from voxora.agency
    ═══════════════════════════════════════════════════════════ */
-function ParticleCanvas() {
-  const ref = useRef(null);
+function AINetworkCanvas() {
+  const canvasRef = useRef(null);
+  const mouse = useRef({ x: -9999, y: -9999 });
+  const animRef = useRef(null);
+
   useEffect(() => {
-    const c = ref.current, ctx = c.getContext('2d');
-    let raf;
-    const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
-    resize();
-    window.addEventListener('resize', resize);
-    const pts = Array.from({ length: 80 }, () => ({
-      x: Math.random() * c.width, y: Math.random() * c.height,
-      r: Math.random() * 1.2 + 0.3,
-      vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
-      a: Math.random() * 0.4 + 0.1,
-      col: ['139,92,246', '6,182,212', '255,255,255'][Math.floor(Math.random() * 3)]
-    }));
-    const draw = () => {
-      ctx.clearRect(0, 0, c.width, c.height);
-      const g1 = ctx.createRadialGradient(c.width * 0.75, c.height * 0.25, 0, c.width * 0.75, c.height * 0.25, 400);
-      g1.addColorStop(0, 'rgba(139,92,246,0.06)'); g1.addColorStop(1, 'transparent');
-      ctx.fillStyle = g1; ctx.fillRect(0, 0, c.width, c.height);
-      const g2 = ctx.createRadialGradient(c.width * 0.15, c.height * 0.8, 0, c.width * 0.15, c.height * 0.8, 300);
-      g2.addColorStop(0, 'rgba(6,182,212,0.04)'); g2.addColorStop(1, 'transparent');
-      ctx.fillStyle = g2; ctx.fillRect(0, 0, c.width, c.height);
-      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
-        if (d < 100) { ctx.beginPath(); ctx.strokeStyle = `rgba(139,92,246,${0.05 * (1 - d / 100)})`; ctx.lineWidth = 0.5; ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke(); }
-      }
-      pts.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = c.width; if (p.x > c.width) p.x = 0;
-        if (p.y < 0) p.y = c.height; if (p.y > c.height) p.y = 0;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.col},${p.a})`; ctx.fill();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let width, height, nodes;
+
+    const NODE_COUNT = 80;
+    const MAX_DIST = 160;
+    const MOUSE_RADIUS = 220;
+
+    function resize() {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+    }
+
+    function createNodes() {
+      nodes = Array.from({ length: NODE_COUNT }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        radius: Math.random() * 1.8 + 0.8,
+        color: Math.random() > 0.5 ? '139,92,246' : '6,182,212',
+        pulse: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Atmospheric glow orbs — like voxora.agency
+      const g1 = ctx.createRadialGradient(width * 0.75, height * 0.2, 0, width * 0.75, height * 0.2, 500);
+      g1.addColorStop(0, 'rgba(139,92,246,0.07)');
+      g1.addColorStop(1, 'transparent');
+      ctx.fillStyle = g1; ctx.fillRect(0, 0, width, height);
+
+      const g2 = ctx.createRadialGradient(width * 0.1, height * 0.8, 0, width * 0.1, height * 0.8, 400);
+      g2.addColorStop(0, 'rgba(6,182,212,0.05)');
+      g2.addColorStop(1, 'transparent');
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, width, height);
+
+      // Update + draw nodes
+      nodes.forEach((n) => {
+        n.x += n.vx;
+        n.y += n.vy;
+        n.pulse += 0.018;
+
+        if (n.x < 0 || n.x > width) n.vx *= -1;
+        if (n.y < 0 || n.y > height) n.vy *= -1;
+
+        // Mouse repel
+        const dx = n.x - mouse.current.x;
+        const dy = n.y - mouse.current.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MOUSE_RADIUS) {
+          const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
+          n.vx += (dx / dist) * force * 0.25;
+          n.vy += (dy / dist) * force * 0.25;
+        }
+
+        // Speed limit
+        const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+        if (speed > 1.2) { n.vx = (n.vx / speed) * 1.2; n.vy = (n.vy / speed) * 1.2; }
+
+        // Pulse size
+        const r = n.radius + Math.sin(n.pulse) * 0.6;
+        const alpha = 0.45 + Math.sin(n.pulse) * 0.25;
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${n.color},${alpha})`;
+        ctx.fill();
       });
-      raf = requestAnimationFrame(draw);
+
+      // Draw connections with gradient lines
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < MAX_DIST) {
+            const alpha = (1 - dist / MAX_DIST) * 0.22;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(139,92,246,${alpha})`;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+          }
+        }
+      }
+
+      animRef.current = requestAnimationFrame(drawFrame);
+    }
+
+    resize();
+    createNodes();
+    drawFrame();
+
+    const handleResize = () => { resize(); createNodes(); };
+    const handleMouse = (e) => {
+      mouse.current = { x: e.clientX, y: e.clientY };
     };
-    draw();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(raf); };
+    const handleMouseLeave = () => { mouse.current = { x: -9999, y: -9999 }; };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouse);
+    window.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouse);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+    };
   }, []);
-  return <canvas ref={ref} className="canvas-bg" />;
+
+  return <canvas ref={canvasRef} className="canvas-bg" />;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPOTLIGHT CARD — Premium Web3/SaaS hover effect
+   ═══════════════════════════════════════════════════════════ */
+function SpotlightCard({ children, className = '', style = {} }) {
+  const ref = useRef(null);
+  const [pos, setPos] = useState({ x: 0, y: 0, opacity: 0 });
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, opacity: 1 });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setPos(p => ({ ...p, opacity: 0 }));
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{ position: 'relative', overflow: 'hidden', ...style }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: pos.opacity,
+          transition: 'opacity 0.3s ease',
+          pointerEvents: 'none',
+          background: `radial-gradient(350px circle at ${pos.x}px ${pos.y}px, rgba(139,92,246,0.12), transparent 70%)`,
+          zIndex: 1,
+          borderRadius: 'inherit',
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 2 }}>{children}</div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CYBER SCRAMBLE TEXT — Hacker decode effect
+   ═══════════════════════════════════════════════════════════ */
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*![]{}';
+function CyberScramble({ text, trigger = 0, duration = 900 }) {
+  const [display, setDisplay] = useState(text);
+  const timeoutRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (!text) return;
+    let start = Date.now();
+    clearInterval(intervalRef.current);
+    clearTimeout(timeoutRef.current);
+
+    intervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const resolved = Math.floor(progress * text.length);
+      let out = '';
+      for (let i = 0; i < text.length; i++) {
+        if (i < resolved || text[i] === ' ') {
+          out += text[i];
+        } else {
+          out += CHARS[Math.floor(Math.random() * CHARS.length)];
+        }
+      }
+      setDisplay(out);
+      if (progress >= 1) {
+        clearInterval(intervalRef.current);
+        setDisplay(text);
+      }
+    }, 30);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(timeoutRef.current);
+    };
+  }, [text, trigger, duration]);
+
+  return <span style={{ fontFamily: 'monospace' }}>{display}</span>;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BRAIN FEED TERMINAL — The Voxora AI Operations Log
+   ═══════════════════════════════════════════════════════════ */
+const BRAIN_MESSAGES = [
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Scraping and analyzing 2,500 new targets from Apollo.io...' },
+  { tag: 'SMTP Router', color: '#06b6d4', msg: 'Dispatching cold email batch via Inbox #7 — vox-outreach-07@...' },
+  { tag: 'Outbound', color: '#8b5cf6', msg: 'Sent 1,420 automated follow-ups across 20 inboxes.' },
+  { tag: 'Reply AI', color: '#10b981', msg: 'Detected 3 positive replies. Routing to Unified Inbox...' },
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Niche scoring complete: Healthcare SaaS — Match Score 94%' },
+  { tag: 'Scheduler', color: '#f59e0b', msg: 'Follow-up sequence queued for 847 leads at 09:00 UTC.' },
+  { tag: 'Guardian', color: '#ef4444', msg: 'Bounce detected: contact@oldomain.net — auto-archived.' },
+  { tag: 'Scraper', color: '#06b6d4', msg: 'LinkedIn profile enrichment: 120 leads updated with job titles.' },
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Subject line A/B test: Variant B +22% open rate. Switching...' },
+  { tag: 'Outbound', color: '#8b5cf6', msg: 'Campaign #3 running. 2,141 emails delivered. 0 spam flags.' },
+  { tag: 'Reply AI', color: '#10b981', msg: 'Positive intent flagged: "Can we schedule a call?" — SAAS NICHE' },
+  { tag: 'Watchdog', color: '#f59e0b', msg: 'SMTP health check passed: 20/20 inboxes active. Warmup: 99.8%' },
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Personalisation tokens injected: 2,500 emails — 100% unique.' },
+  { tag: 'Scraper', color: '#06b6d4', msg: 'New niche unlocked: Logistics Plus — 380 validated leads ready.' },
+];
+
+function BrainFeed() {
+  const [lines, setLines] = useState([]);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    // Add initial lines
+    const initial = BRAIN_MESSAGES.slice(0, 4).map((m, i) => ({
+      ...m, id: i, ts: new Date(Date.now() - (4 - i) * 8000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), scramble: 0
+    }));
+    setLines(initial);
+    setMsgIdx(4);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx(prev => {
+        const idx = prev % BRAIN_MESSAGES.length;
+        const newLine = {
+          ...BRAIN_MESSAGES[idx],
+          id: Date.now(),
+          ts: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          scramble: Date.now(),
+        };
+        setLines(l => [...l.slice(-12), newLine]);
+        return prev + 1;
+      });
+    }, 3200);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [lines]);
+
+  return (
+    <div className="brain-feed">
+      <div className="brain-feed-header">
+        <Terminal size={13} style={{ color: '#8b5cf6' }} />
+        <span className="brain-feed-title">VOXORA BRAIN FEED</span>
+        <span className="brain-feed-live"><span className="pulse-dot" />LIVE</span>
+      </div>
+      <div className="brain-feed-body" ref={scrollRef}>
+        {lines.map((line) => (
+          <div key={line.id} className="brain-line">
+            <span className="brain-ts">{line.ts}</span>
+            <span className="brain-tag" style={{ color: line.color }}>[{line.tag}]</span>
+            <span className="brain-msg">
+              <CyberScramble text={line.msg} trigger={line.scramble} duration={700} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LIVE SYSTEM TICKER — Continuous marquee bar
+   ═══════════════════════════════════════════════════════════ */
+function SystemTicker() {
+  const items = [
+    '/// SMTP HEALTH: 99.9%',
+    '/// AI AGENTS: ONLINE',
+    '/// DAILY CAPACITY: 2,500 LEADS',
+    '/// OUTBOUND ENGINE: OPTIMIZED',
+    '/// REPLY DETECTION: ACTIVE',
+    '/// INBOX WARMUP: 98.2%',
+    '/// N8N WORKFLOWS: 7 RUNNING',
+    '/// SPAM SCORE: 0.02% (EXCELLENT)',
+    '/// DOMAINS ACTIVE: 20',
+    '/// SEQUENCES QUEUED: 847',
+  ];
+  const text = items.join('   ');
+
+  return (
+    <div className="system-ticker">
+      <div className="ticker-track">
+        <span className="ticker-content">{text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{text}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3D MATRIX GLOBE — Canvas-based wireframe globe
+   ═══════════════════════════════════════════════════════════ */
+function MatrixGlobe() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const rotRef = useRef(0);
+
+  const ORBIT_LABELS = [
+    'Automated Outbound', 'Hyper Growth', 'AI Lead Scoring',
+    'SMTP Routing', 'Global Reach', 'Cold Outreach', 'n8n Automation'
+  ];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width = 420;
+    const H = canvas.height = 420;
+    const cx = W / 2, cy = H / 2, R = 130;
+
+    // Globe points
+    const latLines = 10, lngLines = 16;
+    const globePts = [];
+    for (let i = 0; i <= latLines; i++) {
+      for (let j = 0; j <= lngLines; j++) {
+        const lat = (i / latLines) * Math.PI - Math.PI / 2;
+        const lng = (j / lngLines) * 2 * Math.PI;
+        globePts.push({ lat, lng });
+      }
+    }
+
+    // Activity dots (simulate email pings)
+    const activityDots = Array.from({ length: 12 }, () => ({
+      lat: (Math.random() - 0.5) * Math.PI,
+      lng: Math.random() * 2 * Math.PI,
+      life: Math.random(),
+      speed: 0.003 + Math.random() * 0.004,
+      color: Math.random() > 0.5 ? '139,92,246' : '6,182,212',
+    }));
+
+    // Orbit ring label positions
+    const orbitAngleRef = { val: 0 };
+
+    function project(lat, lng, rot) {
+      const x = R * Math.cos(lat) * Math.cos(lng + rot);
+      const y = R * Math.sin(lat);
+      const z = R * Math.cos(lat) * Math.sin(lng + rot);
+      return { x: cx + x, y: cy - y, z };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      const rot = rotRef.current;
+
+      // Outer glow
+      const grd = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 1.3);
+      grd.addColorStop(0, 'rgba(139,92,246,0.0)');
+      grd.addColorStop(0.7, 'rgba(139,92,246,0.04)');
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2); ctx.fill();
+
+      // Draw lat lines
+      for (let i = 0; i <= latLines; i++) {
+        const lat = (i / latLines) * Math.PI - Math.PI / 2;
+        ctx.beginPath();
+        let first = true;
+        for (let j = 0; j <= 64; j++) {
+          const lng = (j / 64) * 2 * Math.PI;
+          const p = project(lat, lng, rot);
+          if (first) { ctx.moveTo(p.x, p.y); first = false; }
+          else ctx.lineTo(p.x, p.y);
+        }
+        const alpha = 0.08 + 0.04 * Math.sin(i / latLines * Math.PI);
+        ctx.strokeStyle = `rgba(139,92,246,${alpha})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+
+      // Draw lng lines
+      for (let j = 0; j <= lngLines; j++) {
+        const lng = (j / lngLines) * 2 * Math.PI;
+        ctx.beginPath();
+        let first = true;
+        for (let i = 0; i <= 64; i++) {
+          const lat = (i / 64) * Math.PI - Math.PI / 2;
+          const p = project(lat, lng, rot);
+          if (first) { ctx.moveTo(p.x, p.y); first = false; }
+          else ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = 'rgba(139,92,246,0.07)';
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+
+      // Activity dots
+      activityDots.forEach(dot => {
+        dot.life += dot.speed;
+        if (dot.life > 1) { dot.life = 0; dot.lng = Math.random() * 2 * Math.PI; dot.lat = (Math.random() - 0.5) * Math.PI; }
+        const p = project(dot.lat, dot.lng, rot);
+        if (p.z > 0) {
+          const alpha = 0.4 + 0.6 * Math.sin(dot.life * Math.PI);
+          const r = 2 + 3 * Math.sin(dot.life * Math.PI);
+          // Pulse ring
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(${dot.color},${alpha * 0.3})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          // Core dot
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${dot.color},${alpha})`;
+          ctx.fill();
+        }
+      });
+
+      // Orbit ring with labels
+      orbitAngleRef.val += 0.004;
+      const orbitR = R + 30;
+      ctx.beginPath();
+      ctx.arc(cx, cy, orbitR, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(139,92,246,0.12)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 8]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ORBIT_LABELS.forEach((label, i) => {
+        const angle = orbitAngleRef.val + (i / ORBIT_LABELS.length) * Math.PI * 2;
+        const lx = cx + (orbitR + 18) * Math.cos(angle);
+        const ly = cy + (orbitR + 18) * Math.sin(angle);
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.rotate(angle + Math.PI / 2);
+        ctx.font = 'bold 7.5px Inter, monospace';
+        ctx.fillStyle = 'rgba(139,92,246,0.6)';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, 0, 0);
+        ctx.restore();
+      });
+
+      // AI Robot icon in center (simplified SVG-like drawing)
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#8b5cf6';
+      // Head
+      ctx.beginPath(); ctx.roundRect(cx - 14, cy - 22, 28, 22, 6); ctx.fill();
+      // Eyes
+      ctx.fillStyle = '#06b6d4'; ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.arc(cx - 6, cy - 13, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 6, cy - 13, 3.5, 0, Math.PI * 2); ctx.fill();
+      // Antenna
+      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.moveTo(cx, cy - 22); ctx.lineTo(cx, cy - 30);
+      ctx.arc(cx, cy - 30, 2, 0, Math.PI * 2); ctx.stroke();
+      // Body
+      ctx.fillStyle = '#8b5cf6'; ctx.globalAlpha = 0.15;
+      ctx.beginPath(); ctx.roundRect(cx - 18, cy + 2, 36, 20, 5); ctx.fill();
+      ctx.restore();
+
+      rotRef.current += 0.004;
+      animRef.current = requestAnimationFrame(draw);
+    }
+
+    draw();
+    return () => cancelAnimationFrame(animRef.current);
+  }, []);
+
+  return (
+    <div className="matrix-globe-wrap">
+      <canvas ref={canvasRef} className="matrix-globe-canvas" width="420" height="420" />
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -89,7 +539,6 @@ function StatusBadge({ status }) {
     replied: 'replied',
     archived: 'archived',
     bounced: 'bounced',
-    // legacy
     sent: 'sent',
     followup_1: 'followup',
     followup_2: 'followup',
@@ -179,7 +628,7 @@ function CampaignSelector({ campaigns, selectedId, onSelect, loading }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SIDEBAR — now with active page state
+   SIDEBAR
    ═══════════════════════════════════════════════════════════ */
 function Sidebar({ activePage, onNavigate }) {
   const navItems = [
@@ -224,17 +673,19 @@ function Sidebar({ activePage, onNavigate }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   METRIC CARD
+   METRIC CARD — with Spotlight hover
    ═══════════════════════════════════════════════════════════ */
 function MetricCard({ label, value, icon, variant, badge, sub, loading, idx }) {
   return (
-    <motion.div className={`glass-card metric-card metric-${variant}`}
-      initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: idx * 0.07, ease: [0.23, 1, 0.32, 1] }}>
-      <div className="metric-header"><span className="metric-label">{label}</span><div className="metric-icon-wrap">{icon}</div></div>
-      <div className="metric-value"><AnimCounter value={value} loading={loading} /></div>
-      {!loading && <div className="metric-footer"><span className="metric-badge">{badge}</span><span className="metric-sub">{sub}</span></div>}
-    </motion.div>
+    <SpotlightCard className={`glass-card metric-card metric-${variant}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: idx * 0.07, ease: [0.23, 1, 0.32, 1] }}>
+        <div className="metric-header"><span className="metric-label">{label}</span><div className="metric-icon-wrap">{icon}</div></div>
+        <div className="metric-value"><AnimCounter value={value} loading={loading} /></div>
+        {!loading && <div className="metric-footer"><span className="metric-badge">{badge}</span><span className="metric-sub">{sub}</span></div>}
+      </motion.div>
+    </SpotlightCard>
   );
 }
 
@@ -298,15 +749,24 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
         <MetricCard label="Follow-ups" value={stats.followups} icon={<Activity size={14} />} variant="amber" badge="Running" sub="auto-scheduled" loading={loading} idx={3} />
       </div>
 
-      {/* CHART + AI PANEL */}
-      <div className="mid-grid">
-        <motion.div className="glass-card chart-card" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.3 }}>
+      {/* GLOBE + CHART + AI PANEL */}
+      <motion.div className="cinematic-row" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }}>
+        {/* Matrix Globe */}
+        <SpotlightCard className="glass-card globe-card">
+          <div className="card-title" style={{ marginBottom: 4 }}>Global Outreach Matrix</div>
+          <div className="card-subtitle" style={{ marginBottom: 10 }}>Live signal — emails in flight across the world</div>
+          <MatrixGlobe />
+        </SpotlightCard>
+
+        {/* Chart */}
+        <SpotlightCard className="glass-card chart-card">
           <div className="card-title">Conversion Funnel</div>
           <div className="card-subtitle">Lead journey from first touch to meeting booked</div>
           <div style={{ height: 220 }}><Bar data={chartData} options={chartOpts} /></div>
-        </motion.div>
+        </SpotlightCard>
 
-        <motion.div className="glass-card ai-panel" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.35 }}>
+        {/* AI Panel */}
+        <SpotlightCard className="glass-card ai-panel">
           <div className="ai-panel-header">
             <div className="ai-panel-icon"><Bot size={14} color="white" /></div>
             <div><div className="card-title" style={{ marginBottom: 0 }}>AI Agents</div><div style={{ fontSize: 11, color: 'var(--text-3)' }}>Live system status</div></div>
@@ -318,11 +778,18 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)', marginBottom: 8 }}><span>Archived leads</span><span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{stats.archived}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)' }}><span>Meetings booked</span><span style={{ color: 'var(--emerald)', fontWeight: 600 }}>{stats.meeting_booked}</span></div>
           </div>
-        </motion.div>
-      </div>
+        </SpotlightCard>
+      </motion.div>
 
-      {/* LEADS TABLE — preview only on dashboard */}
-      <motion.div className="glass-card table-card" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.4 }}>
+      {/* BRAIN FEED */}
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.38 }}>
+        <SpotlightCard className="glass-card">
+          <BrainFeed />
+        </SpotlightCard>
+      </motion.div>
+
+      {/* LEADS TABLE */}
+      <motion.div className="glass-card table-card" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.45 }}>
         <div className="table-header">
           <div>
             <div className="card-title">Recent Leads</div>
@@ -357,7 +824,6 @@ function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFut
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.35, delay }}
     >
-      {/* Left: icon + line */}
       <div className="timeline-left">
         <div className={`timeline-dot ${isFuture ? 'timeline-dot--future' : ''}`} style={{ '--dot-color': color }}>
           {isFuture
@@ -368,7 +834,6 @@ function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFut
         <div className="timeline-line" />
       </div>
 
-      {/* Right: content */}
       <div className="timeline-content">
         <div className="timeline-header" onClick={() => hasMeta && !isFuture && setExpanded(e => !e)} style={{ cursor: hasMeta && !isFuture ? 'pointer' : 'default' }}>
           <div className="timeline-step-badge" style={{ '--step-color': color }}>{label}</div>
@@ -472,7 +937,6 @@ function LeadIntelPanel({ lead, onClose }) {
 
   return (
     <AnimatePresence>
-      {/* Backdrop */}
       <motion.div
         className="intel-backdrop"
         initial={{ opacity: 0 }}
@@ -481,7 +945,6 @@ function LeadIntelPanel({ lead, onClose }) {
         onClick={onClose}
       />
 
-      {/* Panel */}
       <motion.div
         className="intel-panel"
         initial={{ x: '100%', opacity: 0 }}
@@ -489,7 +952,6 @@ function LeadIntelPanel({ lead, onClose }) {
         exit={{ x: '100%', opacity: 0 }}
         transition={{ duration: 0.38, ease: [0.23, 1, 0.32, 1] }}
       >
-        {/* Panel Header */}
         <div className="intel-panel-header">
           <div className="intel-avatar">{initials}</div>
           <div className="intel-header-info">
@@ -499,10 +961,8 @@ function LeadIntelPanel({ lead, onClose }) {
           <button className="intel-close" onClick={onClose}><X size={16} /></button>
         </div>
 
-        {/* Scrollable body */}
         <div className="intel-panel-body">
 
-          {/* Company Card */}
           <div className="intel-section">
             <div className="intel-company-card">
               <div className="intel-company-left">
@@ -520,7 +980,6 @@ function LeadIntelPanel({ lead, onClose }) {
             </div>
           </div>
 
-          {/* AI Intelligence Tags */}
           {(lead.target_client || lead.industry_pain || lead.niche_tag) && (
             <div className="intel-section">
               <div className="intel-section-title">AI Intelligence</div>
@@ -556,7 +1015,6 @@ function LeadIntelPanel({ lead, onClose }) {
             </div>
           )}
 
-          {/* Status + Reply info */}
           <div className="intel-section" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <StatusBadge status={lead.status} />
             {lead.replied_at && (
@@ -566,7 +1024,6 @@ function LeadIntelPanel({ lead, onClose }) {
             )}
           </div>
 
-          {/* Outreach Timeline */}
           <div className="intel-section">
             <div className="intel-section-title">Outreach Timeline</div>
             <div className="intel-timeline">
@@ -664,10 +1121,10 @@ function LeadsPage({ leads, loading, campaign, onLeadClick }) {
   const niches = ['all', ...new Set(leads.map(l => l.niche_tag || l.niche).filter(Boolean))];
 
   const filtered = leads.filter(l => {
-    const matchSearch = !search || 
-      (l.first_name || '').toLowerCase().includes(search.toLowerCase()) || 
-      (l.company_name || '').toLowerCase().includes(search.toLowerCase()) || 
-      (l.company || '').toLowerCase().includes(search.toLowerCase()) || 
+    const matchSearch = !search ||
+      (l.first_name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (l.company_name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (l.company || '').toLowerCase().includes(search.toLowerCase()) ||
       (l.email || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || l.status === statusFilter;
     const matchNiche = nicheFilter === 'all' || l.niche_tag === nicheFilter || l.niche === nicheFilter;
@@ -683,7 +1140,6 @@ function LeadsPage({ leads, loading, campaign, onLeadClick }) {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="leads-controls">
         <div className="leads-search">
           <Search size={13} style={{ opacity: 0.4 }} />
@@ -793,7 +1249,6 @@ function InboxPage() {
 
   return (
     <motion.div className="inbox-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-      {/* Sidebar: Accounts */}
       <div className="inbox-sidebar">
         <div className="inbox-sidebar-header">Inboxes</div>
         <div className="inbox-sidebar-list">
@@ -818,7 +1273,6 @@ function InboxPage() {
         </div>
       </div>
 
-      {/* Middle: Message List */}
       <div className="inbox-list">
         <div className="inbox-list-scroll">
           {filtered.length === 0 && !loading && (
@@ -847,15 +1301,14 @@ function InboxPage() {
         </div>
       </div>
 
-      {/* Right: Message Detail */}
       <div className="inbox-detail">
         {selectedMsg ? (
           <>
             <div className="inbox-detail-header">
               <div className="inbox-detail-name">{selectedMsg.name}</div>
               <div className="inbox-detail-meta">
-                <span><Mail size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }}/> {selectedMsg.email}</span>
-                <span><Building2 size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }}/> {selectedMsg.company}</span>
+                <span><Mail size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} /> {selectedMsg.email}</span>
+                <span><Building2 size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} /> {selectedMsg.company}</span>
                 <span className="niche-tag" style={{ marginTop: 0 }}>{selectedMsg.niche}</span>
               </div>
               <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -892,18 +1345,16 @@ export default function App() {
   const [leads, setLeads] = useState([]);
   const [selectedLead, setSelectedLead] = useState(null);
 
-  // Load all campaigns on mount
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from('scraping_jobs').select('*').order('id', { ascending: false });
       if (data && data.length > 0) {
         setCampaigns(data);
-        setSelectedCampaignId(data[0].id); // default to latest
+        setSelectedCampaignId(data[0].id);
       }
     })();
   }, []);
 
-  // Load leads whenever selected campaign changes
   const loadCampaignData = useCallback(async (cid, isRefresh = false) => {
     if (!cid) return;
     if (isRefresh) setRefreshing(true); else setLoading(true);
@@ -918,7 +1369,7 @@ export default function App() {
         total: data.length,
         new: data.filter(l => l.status === 'new').length,
         sent: data.filter(l => l.status === 'cold_email_sent').length,
-        followups: data.filter(l => ['follow_up_1_sent','follow_up_2_sent','follow_up_3_sent'].includes(l.status)).length,
+        followups: data.filter(l => ['follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent'].includes(l.status)).length,
         replied: data.filter(l => l.status === 'replied').length,
         archived: data.filter(l => l.status === 'archived').length,
         bounced: data.filter(l => l.status === 'bounced').length,
@@ -936,7 +1387,7 @@ export default function App() {
 
   const handleCampaignChange = (id) => {
     setSelectedCampaignId(id);
-    setActivePage('dashboard'); // switch to dashboard when campaign changes
+    setActivePage('dashboard');
   };
 
   const renderPage = () => {
@@ -964,7 +1415,8 @@ export default function App() {
 
   return (
     <>
-      <ParticleCanvas />
+      <AINetworkCanvas />
+      <SystemTicker />
       <div className="layout">
         <Sidebar activePage={activePage} onNavigate={setActivePage} />
         <div className="main">
