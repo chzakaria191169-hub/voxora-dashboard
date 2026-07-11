@@ -67,7 +67,7 @@ function ParticleCanvas() {
 function AnimCounter({ value, loading }) {
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (loading || value === 0) { setN(value); return; }
+    if (loading || !value || value === 0 || isNaN(value)) { setN(value || 0); return; }
     let cur = 0; const step = value / 60;
     const t = setInterval(() => { cur += step; if (cur >= value) { setN(value); clearInterval(t); } else setN(Math.floor(cur)); }, 16);
     return () => clearInterval(t);
@@ -924,6 +924,8 @@ export default function App() {
         replied: data.filter(l => l.status === 'replied').length,
         archived: data.filter(l => l.status === 'archived').length,
         bounced: data.filter(l => l.status === 'bounced').length,
+        interested: 0,
+        meeting_booked: 0,
       });
       setLeads(data);
     }
