@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
-  ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2
+  ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -79,8 +80,41 @@ function AnimCounter({ value, loading }) {
    STATUS BADGE
    ═══════════════════════════════════════════════════════════ */
 function StatusBadge({ status }) {
-  const cls = { sent: 'sent', followup_1: 'followup', followup_2: 'followup', followup_3: 'followup', replied: 'replied', interested: 'interested', meeting_booked: 'meeting_booked', archived: 'archived' }[status] || 'sent';
-  return <span className={`status-badge badge-${cls}`}><span className="status-dot" />{status?.replace(/_/g, ' ')}</span>;
+  const map = {
+    new: 'new',
+    cold_email_sent: 'sent',
+    follow_up_1_sent: 'followup',
+    follow_up_2_sent: 'followup',
+    follow_up_3_sent: 'followup',
+    replied: 'replied',
+    archived: 'archived',
+    bounced: 'bounced',
+    // legacy
+    sent: 'sent',
+    followup_1: 'followup',
+    followup_2: 'followup',
+    followup_3: 'followup',
+    interested: 'interested',
+    meeting_booked: 'meeting_booked',
+  };
+  const cls = map[status] || 'new';
+  const labels = {
+    new: 'New',
+    cold_email_sent: 'Cold Email',
+    follow_up_1_sent: 'Follow-up 1',
+    follow_up_2_sent: 'Follow-up 2',
+    follow_up_3_sent: 'Follow-up 3',
+    replied: 'Replied',
+    archived: 'Archived',
+    bounced: 'Bounced',
+    sent: 'Sent',
+    followup_1: 'Follow-up 1',
+    followup_2: 'Follow-up 2',
+    followup_3: 'Follow-up 3',
+    interested: 'Interested',
+    meeting_booked: 'Meeting Booked',
+  };
+  return <span className={`status-badge badge-${cls}`}><span className="status-dot" />{labels[status] || status?.replace(/_/g, ' ')}</span>;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -310,72 +344,253 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MESSAGE MODAL
+   OUTREACH TIMELINE ITEM
    ═══════════════════════════════════════════════════════════ */
-function MessageModal({ lead, onClose }) {
+function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFuture, delay = 0 }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMeta = subject || body || sender || sentAt;
+
+  return (
+    <motion.div
+      className={`timeline-item ${isFuture ? 'timeline-item--future' : ''}`}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.35, delay }}
+    >
+      {/* Left: icon + line */}
+      <div className="timeline-left">
+        <div className={`timeline-dot ${isFuture ? 'timeline-dot--future' : ''}`} style={{ '--dot-color': color }}>
+          {isFuture
+            ? <Circle size={8} style={{ opacity: 0.4 }} />
+            : <CheckCircle2 size={10} color="white" />
+          }
+        </div>
+        <div className="timeline-line" />
+      </div>
+
+      {/* Right: content */}
+      <div className="timeline-content">
+        <div className="timeline-header" onClick={() => hasMeta && !isFuture && setExpanded(e => !e)} style={{ cursor: hasMeta && !isFuture ? 'pointer' : 'default' }}>
+          <div className="timeline-step-badge" style={{ '--step-color': color }}>{label}</div>
+          {sentAt && <span className="timeline-time"><Clock size={10} />{new Date(sentAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
+          {isFuture && <span className="timeline-queued">Queued</span>}
+          {hasMeta && !isFuture && (
+            <motion.span
+              className="timeline-expand-icon"
+              animate={{ rotate: expanded ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRight size={13} />
+            </motion.span>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              className="timeline-detail"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            >
+              {sender && (
+                <div className="timeline-detail-row">
+                  <Mail size={11} style={{ opacity: 0.5, flexShrink: 0 }} />
+                  <span className="timeline-detail-label">From:</span>
+                  <span className="timeline-detail-val">{sender}</span>
+                </div>
+              )}
+              {subject && (
+                <div className="timeline-detail-row">
+                  <span className="timeline-detail-label">Subject:</span>
+                  <span className="timeline-detail-val" style={{ fontWeight: 600, color: 'var(--text-1)' }}>{subject}</span>
+                </div>
+              )}
+              {body && (
+                <div className="timeline-body-wrap">
+                  <pre className="timeline-body-text">{body}</pre>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LEAD INTELLIGENCE PANEL (Slide-over)
+   ═══════════════════════════════════════════════════════════ */
+function LeadIntelPanel({ lead, onClose }) {
   if (!lead) return null;
+
+  const statusOrder = ['cold_email_sent', 'follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent', 'archived', 'replied', 'bounced'];
+  const currentIdx = statusOrder.indexOf(lead.status);
+
+  const steps = [
+    {
+      key: 'cold_email_sent',
+      label: 'Cold Email',
+      color: 'var(--purple)',
+      subject: lead.cold_email_subject,
+      body: lead.cold_email_body,
+      sender: lead.cold_email_sender,
+      sentAt: lead.cold_email_sent_at,
+    },
+    {
+      key: 'follow_up_1_sent',
+      label: 'Follow-up 1',
+      color: 'var(--cyan)',
+      subject: lead.follow_up_1_subject,
+      body: lead.follow_up_1_body,
+      sender: lead.follow_up_1_sender,
+      sentAt: lead.follow_up_1_sent_at,
+    },
+    {
+      key: 'follow_up_2_sent',
+      label: 'Follow-up 2',
+      color: 'var(--amber)',
+      subject: lead.follow_up_2_subject,
+      body: lead.follow_up_2_body,
+      sender: lead.follow_up_2_sender,
+      sentAt: lead.follow_up_2_sent_at,
+    },
+    {
+      key: 'follow_up_3_sent',
+      label: 'Follow-up 3',
+      color: 'var(--emerald)',
+      subject: lead.follow_up_3_subject,
+      body: lead.follow_up_3_body,
+      sender: lead.follow_up_3_sender,
+      sentAt: lead.follow_up_3_sent_at,
+    },
+  ];
+
+  const initials = (lead.first_name || '?').charAt(0).toUpperCase();
+
   return (
     <AnimatePresence>
+      {/* Backdrop */}
       <motion.div
-        className="modal-backdrop"
+        className="intel-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
+      />
+
+      {/* Panel */}
+      <motion.div
+        className="intel-panel"
+        initial={{ x: '100%', opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: '100%', opacity: 0 }}
+        transition={{ duration: 0.38, ease: [0.23, 1, 0.32, 1] }}
       >
-        <motion.div
-          className="modal-box"
-          initial={{ opacity: 0, scale: 0.93, y: 24 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.93, y: 24 }}
-          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="modal-header">
-            <div className="modal-header-left">
-              <div className="modal-icon"><Mail size={15} color="white" /></div>
-              <div>
-                <div className="modal-title">Email Sent</div>
-                <div className="modal-sub">{lead.company || '—'} · {lead.first_name || '—'}</div>
+        {/* Panel Header */}
+        <div className="intel-panel-header">
+          <div className="intel-avatar">{initials}</div>
+          <div className="intel-header-info">
+            <div className="intel-name">{lead.first_name || '—'}</div>
+            <div className="intel-email">{lead.email}</div>
+          </div>
+          <button className="intel-close" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="intel-panel-body">
+
+          {/* Company Card */}
+          <div className="intel-section">
+            <div className="intel-company-card">
+              <div className="intel-company-left">
+                <Building2 size={14} style={{ color: 'var(--purple-bright)', flexShrink: 0 }} />
+                <div>
+                  <div className="intel-company-name">{lead.company_name || lead.company || '—'}</div>
+                  {lead.job_title && <div className="intel-job-title">{lead.job_title}</div>}
+                </div>
+              </div>
+              {lead.website && (
+                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="intel-website-btn">
+                  <Globe size={11} /> Visit Site <ExternalLink size={10} />
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* AI Intelligence Tags */}
+          {(lead.target_client || lead.industry_pain || lead.niche_tag) && (
+            <div className="intel-section">
+              <div className="intel-section-title">AI Intelligence</div>
+              <div className="intel-tags-grid">
+                {lead.niche_tag && (
+                  <div className="intel-tag intel-tag--purple">
+                    <Tag size={10} />
+                    <div>
+                      <div className="intel-tag-label">Niche</div>
+                      <div className="intel-tag-val">{lead.niche_tag}</div>
+                    </div>
+                  </div>
+                )}
+                {lead.target_client && (
+                  <div className="intel-tag intel-tag--cyan">
+                    <Target size={10} />
+                    <div>
+                      <div className="intel-tag-label">Target Client</div>
+                      <div className="intel-tag-val">{lead.target_client}</div>
+                    </div>
+                  </div>
+                )}
+                {lead.industry_pain && (
+                  <div className="intel-tag intel-tag--amber" style={{ gridColumn: '1 / -1' }}>
+                    <Briefcase size={10} />
+                    <div>
+                      <div className="intel-tag-label">Industry Pain</div>
+                      <div className="intel-tag-val">{lead.industry_pain}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <button className="modal-close" onClick={onClose}><X size={16} /></button>
-          </div>
+          )}
 
-          {/* Meta Row */}
-          <div className="modal-meta">
-            <div className="modal-meta-item">
-              <Building2 size={12} style={{ opacity: 0.5 }} />
-              <span>{lead.sender || '—'}</span>
-            </div>
-            <div className="modal-meta-item">
-              <Clock size={12} style={{ opacity: 0.5 }} />
-              <span>{lead.sent_at ? new Date(lead.sent_at).toLocaleString() : '—'}</span>
-            </div>
-            {lead.niche && <span className="niche-tag">{lead.niche}</span>}
-          </div>
-
-          {/* Subject Line */}
-          <div className="modal-subject">
-            <span className="modal-subject-label">Subject</span>
-            <span className="modal-subject-value">{lead.company}</span>
-          </div>
-
-          {/* Body */}
-          <div className="modal-body-wrap">
-            {lead.message
-              ? <pre className="modal-message">{lead.message}</pre>
-              : <div className="modal-no-message">No message recorded for this lead.</div>
-            }
-          </div>
-
-          {/* Footer */}
-          <div className="modal-footer">
+          {/* Status + Reply info */}
+          <div className="intel-section" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <StatusBadge status={lead.status} />
-            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>To: {lead.email}</span>
+            {lead.replied_at && (
+              <span style={{ fontSize: 11, color: 'var(--emerald)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CheckCircle2 size={11} /> Replied {new Date(lead.replied_at).toLocaleDateString()}
+              </span>
+            )}
           </div>
-        </motion.div>
+
+          {/* Outreach Timeline */}
+          <div className="intel-section">
+            <div className="intel-section-title">Outreach Timeline</div>
+            <div className="intel-timeline">
+              {steps.map((step, i) => {
+                const isSent = step.sentAt != null;
+                const isFuture = !isSent;
+                return (
+                  <TimelineItem
+                    key={step.key}
+                    label={step.label}
+                    color={step.color}
+                    subject={step.subject}
+                    body={step.body}
+                    sender={step.sender}
+                    sentAt={step.sentAt}
+                    isFuture={isFuture}
+                    delay={i * 0.07}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
       </motion.div>
     </AnimatePresence>
   );
@@ -391,35 +606,49 @@ function LeadsTable({ leads, loading }) {
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
   return (
     <>
-      <MessageModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
+      <LeadIntelPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />
       <table className="leads-table">
         <thead>
           <tr>
             <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Niche</th><th>Sender</th><th style={{ textAlign: 'center' }}>Message</th>
+            <th>Status</th><th>Niche</th><th>Last Sent</th><th style={{ textAlign: 'center' }}>Intel</th>
           </tr>
         </thead>
         <tbody>
-          {leads.map((lead, i) => (
-            <tr key={lead.id}>
-              <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
-              <td className="lead-name">{lead.first_name || '—'}</td>
-              <td>{lead.company || '—'}</td>
-              <td className="lead-email">{lead.email}</td>
-              <td><StatusBadge status={lead.status} /></td>
-              <td>{lead.niche ? <span className="niche-tag">{lead.niche}</span> : '—'}</td>
-              <td style={{ fontSize: 12 }}>{lead.sender || '—'}</td>
-              <td style={{ textAlign: 'center' }}>
-                <button
-                  className={`msg-btn ${lead.message ? 'msg-btn--has' : 'msg-btn--empty'}`}
-                  onClick={() => setSelectedLead(lead)}
-                  title={lead.message ? 'View sent message' : 'No message recorded'}
-                >
-                  <Mail size={13} />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {leads.map((lead, i) => {
+            const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at;
+            const hasMsgs = !!(lead.cold_email_body || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
+            return (
+              <tr key={lead.id} onClick={() => setSelectedLead(lead)} style={{ cursor: 'pointer' }}>
+                <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
+                <td className="lead-name">
+                  <div>{lead.first_name || '—'}</div>
+                  {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{lead.job_title}</div>}
+                </td>
+                <td>
+                  {lead.website
+                    ? <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || '—'}</a>
+                    : (lead.company_name || lead.company || '—')
+                  }
+                </td>
+                <td className="lead-email">{lead.email}</td>
+                <td><StatusBadge status={lead.status} /></td>
+                <td>{lead.niche_tag ? <span className="niche-tag">{lead.niche_tag}</span> : (lead.niche ? <span className="niche-tag">{lead.niche}</span> : '—')}</td>
+                <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
+                    onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                    title="View lead intelligence"
+                  >
+                    <Mail size={13} />
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </>
@@ -434,13 +663,13 @@ function LeadsPage({ leads, loading, campaign }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
 
-  const statuses = ['all', 'sent', 'followup_1', 'followup_2', 'followup_3', 'replied', 'interested', 'meeting_booked', 'archived'];
-  const niches = ['all', ...new Set(leads.map(l => l.niche).filter(Boolean))];
+  const statuses = ['all', 'new', 'cold_email_sent', 'follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent', 'replied', 'archived', 'bounced'];
+  const niches = ['all', ...new Set(leads.map(l => l.niche_tag || l.niche).filter(Boolean))];
 
   const filtered = leads.filter(l => {
-    const matchSearch = !search || l.first_name?.toLowerCase().includes(search.toLowerCase()) || l.company?.toLowerCase().includes(search.toLowerCase()) || l.email?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || l.first_name?.toLowerCase().includes(search.toLowerCase()) || l.company_name?.toLowerCase().includes(search.toLowerCase()) || l.company?.toLowerCase().includes(search.toLowerCase()) || l.email?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || l.status === statusFilter;
-    const matchNiche = nicheFilter === 'all' || l.niche === nicheFilter;
+    const matchNiche = nicheFilter === 'all' || l.niche_tag === nicheFilter || l.niche === nicheFilter;
     return matchSearch && matchStatus && matchNiche;
   });
 
@@ -548,9 +777,9 @@ function InboxPage() {
     (async () => {
       setLoading(true);
       const { data } = await supabase
-        .from('leads')
+        .from('scraped_leads')
         .select('*')
-        .not('reply_message', 'is', null)
+        .eq('status', 'replied')
         .order('replied_at', { ascending: false, nullsFirst: false });
       if (data) setReplies(data);
       setLoading(false);
@@ -664,7 +893,7 @@ export default function App() {
   // Load all campaigns on mount
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('campaigns').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('scraping_jobs').select('*').order('id', { ascending: false });
       if (data && data.length > 0) {
         setCampaigns(data);
         setSelectedCampaignId(data[0].id); // default to latest
@@ -677,20 +906,20 @@ export default function App() {
     if (!cid) return;
     if (isRefresh) setRefreshing(true); else setLoading(true);
 
-    const { data: camp } = await supabase.from('campaigns').select('*').eq('id', cid).single();
+    const { data: camp } = await supabase.from('scraping_jobs').select('*').eq('id', cid).single();
     setCampaign(camp);
 
-    const { data, error } = await supabase.from('leads').select('*').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
+    const { data, error } = await supabase.from('scraped_leads').select('*').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
     if (error) console.error(error);
     if (data) {
       setStats({
         total: data.length,
-        sent: data.filter(l => l.status === 'sent').length,
-        followups: data.filter(l => l.status?.includes('followup')).length,
+        new: data.filter(l => l.status === 'new').length,
+        sent: data.filter(l => l.status === 'cold_email_sent').length,
+        followups: data.filter(l => ['follow_up_1_sent','follow_up_2_sent','follow_up_3_sent'].includes(l.status)).length,
         replied: data.filter(l => l.status === 'replied').length,
-        interested: data.filter(l => l.status === 'interested').length,
-        meeting_booked: data.filter(l => l.status === 'meeting_booked').length,
         archived: data.filter(l => l.status === 'archived').length,
+        bounced: data.filter(l => l.status === 'bounced').length,
       });
       setLeads(data);
     }

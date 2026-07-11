@@ -1383,3 +1383,347 @@ body {
   white-space: pre-wrap;
   font-family: var(--font-body);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LEAD INTELLIGENCE PANEL (Slide-over)
+   ═══════════════════════════════════════════════════════════ */
+.intel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.intel-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 460px;
+  max-width: 90vw;
+  background: rgba(10, 10, 20, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.intel-panel-header {
+  padding: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+}
+
+.intel-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--purple), var(--cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 8px 24px var(--purple-dim);
+}
+
+.intel-header-info {
+  flex: 1;
+}
+
+.intel-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.intel-email {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.intel-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.intel-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.intel-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.intel-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+/* Company Card */
+.intel-company-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.intel-company-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.intel-company-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-1);
+}
+
+.intel-job-title {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.intel-website-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.intel-website-btn:hover {
+  background: rgba(6, 182, 212, 0.2);
+}
+
+/* AI Tags */
+.intel-tags-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.intel-tag {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.intel-tag--purple { border-color: rgba(139, 92, 246, 0.15); color: var(--purple-bright); }
+.intel-tag--cyan { border-color: rgba(6, 182, 212, 0.15); color: var(--cyan); }
+.intel-tag--amber { border-color: rgba(245, 158, 11, 0.15); color: var(--amber); }
+
+.intel-tag-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.intel-tag-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+
+/* Timeline */
+.intel-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.timeline-item--future {
+  opacity: 0.5;
+}
+
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dot-color);
+  box-shadow: 0 0 12px var(--dot-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-dot--future {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.timeline-line {
+  flex: 1;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 32px;
+  margin: 8px 0;
+}
+
+.timeline-item:last-child .timeline-line {
+  display: none;
+}
+
+.timeline-content {
+  flex: 1;
+  padding-bottom: 24px;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-top: -6px;
+  transition: all 0.2s;
+}
+
+.timeline-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.timeline-step-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--step-color);
+}
+
+.timeline-time {
+  font-size: 11px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeline-queued {
+  font-size: 11px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.timeline-expand-icon {
+  margin-left: auto;
+  color: var(--text-3);
+}
+
+.timeline-detail {
+  overflow: hidden;
+  margin-top: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.timeline-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.timeline-detail-label {
+  color: var(--text-3);
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.timeline-detail-val {
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+.timeline-body-wrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.timeline-body-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre-wrap;
+}
+
+.company-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+.company-link:hover {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+}
