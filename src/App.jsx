@@ -637,7 +637,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
                 <td style={{ textAlign: 'center' }}>
                   <button
                     className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
-                    onClick={e => { e.stopPropagation(); setSelectedLead(lead); }}
+                    onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
                     title="View lead intelligence"
                   >
                     <Mail size={13} />
