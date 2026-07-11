@@ -260,7 +260,7 @@ function ComingSoonPage({ icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing }) {
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
 
   const chartData = {
@@ -332,7 +332,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
             Showing 20 of {leads.length} leads — go to Leads page for full list
@@ -599,14 +599,11 @@ function LeadIntelPanel({ lead, onClose }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
    ═══════════════════════════════════════════════════════════ */
-function LeadsTable({ leads, loading }) {
-  const [selectedLead, setSelectedLead] = useState(null);
-
+function LeadsTable({ leads, loading, onLeadClick }) {
   if (loading) return <div className="empty-state">Loading leads...</div>;
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
   return (
     <>
-      <LeadIntelPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />
       <table className="leads-table">
         <thead>
           <tr>
@@ -619,7 +616,7 @@ function LeadsTable({ leads, loading }) {
             const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at;
             const hasMsgs = !!(lead.cold_email_body || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
             return (
-              <tr key={lead.id} onClick={() => setSelectedLead(lead)} style={{ cursor: 'pointer' }}>
+              <tr key={lead.id} onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }}>
                 <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
                 <td className="lead-name">
                   <div>{lead.first_name || '—'}</div>
@@ -658,7 +655,7 @@ function LeadsTable({ leads, loading }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
    ═══════════════════════════════════════════════════════════ */
-function LeadsPage({ leads, loading, campaign }) {
+function LeadsPage({ leads, loading, campaign, onLeadClick }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -710,7 +707,7 @@ function LeadsPage({ leads, loading, campaign }) {
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} />
       </div>
     </motion.div>
   );
@@ -944,9 +941,9 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
