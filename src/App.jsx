@@ -646,9 +646,12 @@ function Sidebar({ activePage, onNavigate }) {
 
   return (
     <motion.div className="sidebar" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.4 }}>
-      <div className="sidebar-logo">
-        <div className="logo-icon"><Zap size={18} color="white" /></div>
-        <span className="logo-text">Voxora</span>
+      <div className="sidebar-logo" style={{ marginBottom: 40, marginTop: 10 }}>
+        <div className="logo-icon-glass">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-1)' }}>
+            <path d="M4 4l8 16 8-16" />
+          </svg>
+        </div>
       </div>
       <span className="nav-section-label">Navigation</span>
       {navItems.map(x => (
@@ -734,14 +737,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 
   return (
     <div className="content">
-      {/* HERO */}
-      <motion.div className="hero-banner" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-        <div className="hero-greeting">AI AUTOMATION COMMAND CENTER</div>
-        <div className="hero-title">Your Pipeline, Automated</div>
-        <div className="hero-subtitle">Real-time intelligence. Every lead tracked, every follow-up automated, every reply detected — all running silently in the background.</div>
-      </motion.div>
-
-      {/* KPI CARDS */}
+      {/* KPI CARDS (Hero Banner Removed for cinematic immediate focus) */}
       <div className="metrics-grid">
         <MetricCard label="Total Leads" value={stats.total} icon={<Users size={14} />} variant="purple" badge={`${stats.total - stats.archived} active`} sub="in pipeline" loading={loading} idx={0} />
         <MetricCard label="Emails Sent" value={stats.sent + stats.followups + stats.replied + stats.interested + stats.meeting_booked} icon={<Send size={14} />} variant="cyan" badge="Delivered" sub="across 20 inboxes" loading={loading} idx={1} />
@@ -767,13 +763,16 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 
         {/* AI Panel */}
         <SpotlightCard className="glass-card ai-panel">
-          <div className="ai-panel-header">
-            <div className="ai-panel-icon"><Bot size={14} color="white" /></div>
-            <div><div className="card-title" style={{ marginBottom: 0 }}>AI Agents</div><div style={{ fontSize: 11, color: 'var(--text-3)' }}>Live system status</div></div>
+          <div className="ai-panel-header" style={{ marginBottom: 16 }}>
+            <div className="ai-panel-icon-glass"><Bot size={13} style={{ color: 'var(--purple-bright)' }} /></div>
+            <div>
+              <div className="card-title" style={{ marginBottom: 0 }}>AI Agents</div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Live System Status</div>
+            </div>
           </div>
-          <div className="agent-row"><div className="agent-dot active" /><div className="agent-info"><div className="agent-name">Reply Detection</div><div className="agent-desc">Monitoring 20 SMTP inboxes</div></div><span className="agent-badge badge-active">Live</span></div>
-          <div className="agent-row"><div className="agent-dot scheduled" /><div className="agent-info"><div className="agent-name">Follow-up Engine</div><div className="agent-desc">Next run: 9:00 AM</div></div><span className="agent-badge badge-scheduled">Queued</span></div>
-          <div className="agent-row"><div className="agent-dot active" /><div className="agent-info"><div className="agent-name">Archive Cleaner</div><div className="agent-desc">Day 13 → auto-archive</div></div><span className="agent-badge badge-active">Live</span></div>
+          <div className="agent-row-glass"><div className="agent-dot-pulse active" /><div className="agent-info"><div className="agent-name">Reply Detection</div><div className="agent-desc">Monitoring 20 SMTP inboxes</div></div><span className="agent-badge badge-active">Live</span></div>
+          <div className="agent-row-glass"><div className="agent-dot-pulse scheduled" /><div className="agent-info"><div className="agent-name">Follow-up Engine</div><div className="agent-desc">Next run: 9:00 AM</div></div><span className="agent-badge badge-scheduled">Queued</span></div>
+          <div className="agent-row-glass"><div className="agent-dot-pulse active" /><div className="agent-info"><div className="agent-name">Archive Cleaner</div><div className="agent-desc">Day 13 → auto-archive</div></div><span className="agent-badge badge-active">Live</span></div>
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 4 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)', marginBottom: 8 }}><span>Archived leads</span><span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{stats.archived}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)' }}><span>Meetings booked</span><span style={{ color: 'var(--emerald)', fontWeight: 600 }}>{stats.meeting_booked}</span></div>
