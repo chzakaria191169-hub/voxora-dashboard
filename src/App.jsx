@@ -1270,7 +1270,7 @@ function InboxPage() {
   const loadReplies = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
-      .from('scraped_leads')
+      .from('leads')
       .select('*')
       .eq('status', 'replied')
       .order('replied_at', { ascending: false, nullsFirst: false });
@@ -1287,7 +1287,7 @@ function InboxPage() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'scraped_leads',
+        table: 'leads',
         filter: 'status=eq.replied'
       }, () => { loadReplies(); })
       .subscribe();
@@ -1303,7 +1303,7 @@ function InboxPage() {
   // Quick action: update lead status in Supabase
   const handleAction = useCallback(async (id, newStatus) => {
     setUpdatingId(id);
-    await supabase.from('scraped_leads').update({ status: newStatus }).eq('id', id);
+    await supabase.from('leads').update({ status: newStatus }).eq('id', id);
     setReplies(prev => prev.filter(r => r.id !== id));
     setSelectedMsgId(null);
     setUpdatingId(null);
@@ -1580,7 +1580,7 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('scraping_jobs').select('*').order('id', { ascending: false });
+      const { data } = await supabase.from('campaigns').select('*').order('id', { ascending: false });
       if (data && data.length > 0) {
         setCampaigns(data);
         setSelectedCampaignId(data[0].id);
@@ -1592,10 +1592,10 @@ export default function App() {
     if (!cid) return;
     if (isRefresh) setRefreshing(true); else setLoading(true);
 
-    const { data: camp } = await supabase.from('scraping_jobs').select('*').eq('id', cid).single();
+    const { data: camp } = await supabase.from('campaigns').select('*').eq('id', cid).single();
     setCampaign(camp);
 
-    const { data, error } = await supabase.from('scraped_leads').select('*').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
+    const { data, error } = await supabase.from('leads').select('*').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
     if (error) console.error(error);
     if (data) {
       setStats({
