@@ -935,9 +935,9 @@ function LeadIntelPanel({ lead, onClose }) {
       label: 'Cold Email',
       color: 'var(--purple)',
       subject: lead.cold_email_subject,
-      body: lead.cold_email_body,
-      sender: lead.cold_email_sender,
-      sentAt: lead.cold_email_sent_at,
+      body: lead.cold_email_body || lead.message,
+      sender: lead.cold_email_sender || lead.sender,
+      sentAt: lead.cold_email_sent_at || lead.sent_at,
     },
     {
       key: 'follow_up_1_sent',
@@ -1105,8 +1105,8 @@ function LeadsTable({ leads, loading, onLeadClick }) {
         </thead>
         <tbody>
           {leads.map((lead, i) => {
-            const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at;
-            const hasMsgs = !!(lead.cold_email_body || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
+            const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at || lead.sent_at;
+            const hasMsgs = !!(lead.cold_email_body || lead.message || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
             return (
               <tr key={lead.id} onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }}>
                 <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
@@ -1115,8 +1115,8 @@ function LeadsTable({ leads, loading, onLeadClick }) {
                   {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{lead.job_title}</div>}
                 </td>
                 <td>
-                  {lead.website
-                    ? <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || '—'}</a>
+                  {(lead.website || lead.Website)
+                    ? <a href={(lead.website || lead.Website).startsWith('http') ? (lead.website || lead.Website) : `https://${lead.website || lead.Website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || '—'}</a>
                     : (lead.company_name || lead.company || '—')
                   }
                 </td>
@@ -1601,13 +1601,13 @@ export default function App() {
       setStats({
         total: data.length,
         new: data.filter(l => l.status === 'new').length,
-        sent: data.filter(l => l.status === 'cold_email_sent').length,
-        followups: data.filter(l => ['follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent'].includes(l.status)).length,
+        sent: data.filter(l => l.status === 'cold_email_sent' || l.status === 'sent').length,
+        followups: data.filter(l => ['follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent', 'followup_1', 'followup_2', 'followup_3'].includes(l.status)).length,
         replied: data.filter(l => l.status === 'replied').length,
         archived: data.filter(l => l.status === 'archived').length,
         bounced: data.filter(l => l.status === 'bounced').length,
-        interested: 0,
-        meeting_booked: 0,
+        interested: data.filter(l => l.status === 'interested').length,
+        meeting_booked: data.filter(l => l.status === 'meeting_booked').length,
       });
       setLeads(data);
     }
