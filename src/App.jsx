@@ -1100,7 +1100,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
         <thead>
           <tr>
             <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center' }}>Intel</th>
+            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center' }}>Intel</th>
           </tr>
         </thead>
         <tbody>
@@ -1122,9 +1122,10 @@ function LeadsTable({ leads, loading, onLeadClick }) {
                 </td>
                 <td className="lead-email">{lead.email}</td>
                 <td><StatusBadge status={lead.status} /></td>
+                <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || '—'}</span></td>
                 <td>{lead.niche_tag ? <span className="niche-tag">{lead.niche_tag}</span> : (lead.niche ? <span className="niche-tag">{lead.niche}</span> : '—')}</td>
                 <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '—'}
+                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                 </td>
                 <td className="col-sticky" style={{ textAlign: 'center' }}>
                   <button
