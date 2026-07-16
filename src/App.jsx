@@ -9,12 +9,13 @@ import {
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
+  PointElement, ArcElement,
   Title, Tooltip, Legend
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Bubble, Doughnut } from 'react-chartjs-2';
 import './index.css';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
 /* ═══════════════════════════════════════════════════════════
    VOXORA AI NETWORK CANVAS — exact DNA from voxora.agency
@@ -1736,6 +1737,204 @@ function InboxPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   ANALYTICS PAGE — ADVANCED DATA VISUALIZATION
+   ═══════════════════════════════════════════════════════════ */
+function AnalyticsPage({ leads = [] }) {
+  // 1. Niche A/B Warfare
+  const nicheStats = useMemo(() => {
+    const map = {};
+    leads.forEach(l => {
+      const niche = l.niche_tag || l.niche || 'Unknown';
+      if (!map[niche]) map[niche] = { total: 0, replied: 0, interested: 0, meetings: 0 };
+      map[niche].total++;
+      if (l.status === 'replied' || l.status === 'interested' || l.status === 'meeting_booked') map[niche].replied++;
+      if (l.status === 'interested' || l.status === 'meeting_booked') map[niche].interested++;
+      if (l.status === 'meeting_booked') map[niche].meetings++;
+    });
+    return Object.entries(map)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total);
+  }, [leads]);
+
+  const nicheChartData = {
+    labels: nicheStats.map(n => n.name.length > 20 ? n.name.slice(0, 20) + '...' : n.name),
+    datasets: [
+      { label: 'Total Leads', data: nicheStats.map(n => n.total), backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 },
+      { label: 'Replies', data: nicheStats.map(n => n.replied), backgroundColor: 'rgba(6,182,212,0.6)', borderRadius: 4 },
+      { label: 'Interested', data: nicheStats.map(n => n.interested), backgroundColor: 'rgba(139,92,246,0.8)', borderRadius: 4 },
+      { label: 'Meetings', data: nicheStats.map(n => n.meetings), backgroundColor: 'rgba(16,185,129,0.9)', borderRadius: 4 },
+    ]
+  };
+
+  // 2. Sentiment Quality Funnel
+  const sentimentStats = useMemo(() => {
+    let hot = 0, positive = 0, neutral = 0, notInterested = 0;
+    const getScore = (text) => {
+      if (!text) return 'neutral';
+      const t = text.toLowerCase();
+      const pos = ['interest', 'yes', 'call', 'meeting', 'schedule', 'tell me more', 'sounds good', 'let\'s', 'when', 'available', 'book', 'demo', 'love to', 'great', 'perfect'].filter(w => t.includes(w)).length;
+      const neg = ['not interest', 'unsubscribe', 'remove', 'stop', 'no thanks', 'not looking', 'don\'t contact', 'do not'].filter(w => t.includes(w)).length;
+      if (neg > 0) return 'notInterested';
+      if (pos >= 3) return 'hot';
+      if (pos >= 1) return 'positive';
+      return 'neutral';
+    };
+    leads.filter(l => l.status === 'replied' || l.status === 'interested' || l.status === 'meeting_booked').forEach(l => {
+      if (l.status === 'meeting_booked' || l.status === 'interested') { hot++; return; }
+      const intent = getScore(l.reply_message);
+      if (intent === 'hot') hot++;
+      else if (intent === 'positive') positive++;
+      else if (intent === 'notInterested') notInterested++;
+      else neutral++;
+    });
+    return { hot, positive, neutral, notInterested };
+  }, [leads]);
+
+  const sentimentChartData = {
+    labels: ['Hot Leads 🔥', 'Positive', 'Neutral', 'Not Interested'],
+    datasets: [{
+      data: [sentimentStats.hot, sentimentStats.positive, sentimentStats.neutral, sentimentStats.notInterested],
+      backgroundColor: ['rgba(16,185,129,0.9)', 'rgba(6,182,212,0.8)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)'],
+      borderColor: 'transparent', hoverOffset: 4
+    }]
+  };
+
+  // 3. Golden Hours Heatmap
+  const heatmapData = useMemo(() => {
+    const grid = {};
+    leads.forEach(l => {
+      if (!l.sent_at && !l.cold_email_sent_at) return;
+      if (!l.replied_at) return;
+      const sentDate = new Date(l.sent_at || l.cold_email_sent_at);
+      const repDate = new Date(l.replied_at);
+      const x = sentDate.getHours();
+      const y = repDate.getHours();
+      const key = `${x},${y}`;
+      grid[key] = (grid[key] || 0) + 1;
+    });
+    const bubbles = [];
+    Object.entries(grid).forEach(([key, count]) => {
+      const [x, y] = key.split(',').map(Number);
+      bubbles.push({ x, y, r: Math.min(25, count * 5 + 3), count });
+    });
+    return bubbles;
+  }, [leads]);
+
+  const heatmapChartData = {
+    datasets: [{
+      label: 'Replies Density',
+      data: heatmapData,
+      backgroundColor: 'rgba(139,92,246,0.6)',
+      borderColor: 'rgba(139,92,246,1)',
+      borderWidth: 1
+    }]
+  };
+
+  const heatmapOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `Sent: ${ctx.raw.x}:00, Replied: ${ctx.raw.y}:00 -> ${ctx.raw.count} Replies`
+        },
+        backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', padding: 12, cornerRadius: 10
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Sent Time (Hour)', color: 'var(--text-3)' }, min: -1, max: 24, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { stepSize: 2, color: 'var(--text-3)' } },
+      y: { title: { display: true, text: 'Reply Time (Hour)', color: 'var(--text-3)' }, min: -1, max: 24, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { stepSize: 2, color: 'var(--text-3)' } },
+    }
+  };
+
+  const chartOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#94A3B8' } }, tooltip: { backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, padding: 12, cornerRadius: 10 } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', precision: 0 }, border: { display: false } },
+      x: { grid: { display: false }, ticks: { color: '#475569' }, border: { display: false } },
+    },
+  };
+
+  const pieOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { color: '#94A3B8', usePointStyle: true, padding: 20 } }, tooltip: { backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', padding: 12, cornerRadius: 10 } },
+    cutout: '65%'
+  };
+
+  const geoStats = useMemo(() => {
+    const map = {};
+    leads.filter(l => l.location).forEach(l => {
+      map[l.location] = (map[l.location] || 0) + 1;
+    });
+    return Object.entries(map).map(([loc, count]) => ({ loc, count })).sort((a,b)=>b.count-a.count);
+  }, [leads]);
+
+  return (
+    <motion.div className="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      <div className="page-header" style={{ marginBottom: 24 }}>
+        <div>
+          <h1 className="page-title">Advanced Analytics</h1>
+          <p className="page-sub">Next-dimension data visualization for your B2B machine</p>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
+        
+        <SpotlightCard className="glass-card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-title">⚔️ Niche A/B Warfare</div>
+          <div className="card-subtitle">Compare performance and conversion velocity across your target niches</div>
+          <div style={{ height: 280, marginTop: 16 }}>
+            {nicheStats.length > 0 ? (
+              <Bar data={nicheChartData} options={chartOpts} />
+            ) : <div className="empty-state" style={{ height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}>Not enough data yet</div>}
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="glass-card">
+          <div className="card-title">⏰ Golden Hours Heatmap</div>
+          <div className="card-subtitle">Correlation between Email Sent Time and Reply Time</div>
+          <div style={{ height: 240, marginTop: 16 }}>
+            {heatmapData.length > 0 ? (
+              <Bubble data={heatmapChartData} options={heatmapOpts} />
+            ) : <div className="empty-state" style={{ height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}>Waiting for reply data...</div>}
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="glass-card">
+          <div className="card-title">🧠 Sentiment Quality Funnel</div>
+          <div className="card-subtitle">AI analysis of reply intent to gauge copy effectiveness</div>
+          <div style={{ height: 240, marginTop: 16 }}>
+            {(sentimentStats.hot + sentimentStats.positive + sentimentStats.neutral + sentimentStats.notInterested) > 0 ? (
+              <Doughnut data={sentimentChartData} options={pieOpts} />
+            ) : <div className="empty-state" style={{ height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}>Waiting for reply data...</div>}
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="glass-card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-title">🌍 Geographic Hit Rate</div>
+          <div className="card-subtitle">Top performing locations (populates automatically for new leads)</div>
+          <div style={{ marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {geoStats.length > 0 ? (
+              geoStats.map(g => (
+                <div key={g.loc} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '12px 16px', borderRadius: 12, minWidth: 160 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-1)' }}>{g.count} <span style={{fontSize: 12, fontWeight: 400, color: 'var(--text-3)'}}>Leads</span></div>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>📍 {g.loc}</div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: 'var(--text-3)', fontSize: 13, fontStyle: 'italic', padding: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 12, width: '100%', textAlign: 'center' }}>
+                Geographic tracking initialized. Awaiting new leads with location data.
+              </div>
+            )}
+          </div>
+        </SpotlightCard>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    APP ROOT
    ═══════════════════════════════════════════════════════════ */
 export default function App() {
@@ -1803,7 +2002,7 @@ export default function App() {
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
-        return <ComingSoonPage icon={<BarChart2 size={40} />} title="Analytics" desc="Deep dive into open rates, click rates, reply rates, and campaign performance over time. Connected to your n8n workflows." />;
+        return <AnalyticsPage leads={leads} />;
       case 'inbox':
         return <InboxPage />;
       case 'filters':
