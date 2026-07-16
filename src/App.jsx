@@ -637,6 +637,7 @@ function Sidebar({ activePage, onNavigate }) {
     { l: 'Campaigns', i: <Send size={15} />, page: 'campaigns' },
     { l: 'Analytics', i: <BarChart2 size={15} />, page: 'analytics' },
     { l: 'Inbox', i: <Inbox size={15} />, page: 'inbox' },
+    { l: 'Filters', i: <Filter size={15} />, page: 'filters' },
   ];
   const sysItems = [
     { l: 'AI Agents', i: <Bot size={15} />, page: 'agents' },
@@ -1258,6 +1259,82 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
 }
 
 /* ═══════════════════════════════════════════════════════════
+   FILTERS PAGE
+   ═══════════════════════════════════════════════════════════ */
+function FiltersPage() {
+  const [filters, setFilters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('campaign_filters').select('*').order('created_at', { ascending: false });
+      if (error) console.error(error);
+      if (data) setFilters(data);
+      setLoading(false);
+    })();
+  }, []);
+
+  return (
+    <motion.div className="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Campaign Filters</h1>
+          <p className="page-sub">Golden targeting recipes for your B2B campaigns</p>
+        </div>
+      </div>
+
+      <div className="glass-card table-card">
+        {loading ? (
+          <div className="empty-state">Loading filters...</div>
+        ) : filters.length === 0 ? (
+          <div className="empty-state">No filters saved yet.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="leads-table" style={{ minWidth: 800 }}>
+              <thead>
+                <tr>
+                  <th>Campaign / Niche</th>
+                  <th>Location & Employees</th>
+                  <th>Job Titles</th>
+                  <th>Keywords (Include)</th>
+                  <th>Keywords (Exclude)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filters.map((f) => (
+                  <tr key={f.id}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{f.campaign_number || '—'}</div>
+                      <div className="niche-tag" style={{ marginTop: 4 }}>{f.niche || '—'}</div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>📍 {f.location || '—'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>👥 {f.employees || '—'}</div>
+                    </td>
+                    <td style={{ fontSize: 12, color: 'var(--text-2)', maxWidth: 150 }}>{f.job_titles || '—'}</td>
+                    <td style={{ fontSize: 12, color: 'var(--emerald)', maxWidth: 200, whiteSpace: 'normal', lineHeight: '1.4' }}>
+                      {f.industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Ind:</strong> {f.industry}</div> : null}
+                      {f.keywords ? <div><strong style={{color:'var(--text-3)'}}>Key:</strong> {f.keywords}</div> : null}
+                      {!f.industry && !f.keywords && '—'}
+                    </td>
+                    <td style={{ fontSize: 12, color: 'var(--red)', maxWidth: 200, whiteSpace: 'normal', lineHeight: '1.4' }}>
+                      {f.exclude_industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Ind:</strong> {f.exclude_industry}</div> : null}
+                      {f.exclude_keywords ? <div><strong style={{color:'var(--text-3)'}}>Key:</strong> {f.exclude_keywords}</div> : null}
+                      {!f.exclude_industry && !f.exclude_keywords && '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    INBOX PAGE — FULL CINEMATIC + FUNCTIONAL SIGNAL CENTER
    ═══════════════════════════════════════════════════════════ */
 function InboxPage() {
@@ -1636,6 +1713,8 @@ export default function App() {
         return <ComingSoonPage icon={<BarChart2 size={40} />} title="Analytics" desc="Deep dive into open rates, click rates, reply rates, and campaign performance over time. Connected to your n8n workflows." />;
       case 'inbox':
         return <InboxPage />;
+      case 'filters':
+        return <FiltersPage />;
       case 'agents':
         return <ComingSoonPage icon={<Bot size={40} />} title="AI Agents" desc="Configure and monitor your AI agents — reply detection, follow-up engine, archive cleaner, and more." />;
       case 'automations':
