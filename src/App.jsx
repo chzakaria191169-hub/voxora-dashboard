@@ -1259,11 +1259,89 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
 }
 
 /* ═══════════════════════════════════════════════════════════
+   KEYWORDS MODAL (Glassmorphism)
+   ═══════════════════════════════════════════════════════════ */
+function KeywordsModal({ data, onClose }) {
+  const isExclude = data.type === 'exclude';
+  const colorVar = isExclude ? 'var(--red)' : 'var(--emerald)';
+  const icon = isExclude ? '🚫 Exclude Keywords' : '🔑 Include Keywords';
+
+  // Split and clean keywords
+  const keywordsList = (data.keywords || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(data.keywords || '');
+  };
+
+  return (
+    <>
+      <motion.div
+        className="intel-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ zIndex: 1000 }}
+      />
+      <motion.div
+        className="glass-card"
+        initial={{ opacity: 0, scale: 0.95, y: '-40%', x: '-50%' }}
+        animate={{ opacity: 1, scale: 1, y: '-50%', x: '-50%' }}
+        exit={{ opacity: 0, scale: 0.95, y: '-40%', x: '-50%' }}
+        style={{
+          position: 'fixed', top: '50%', left: '50%', width: '90%', maxWidth: 500,
+          zIndex: 1001, padding: 24, display: 'flex', flexDirection: 'column', gap: 16
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: colorVar, display: 'flex', alignItems: 'center', gap: 8 }}>
+            {icon} <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}>({keywordsList.length})</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer' }}><X size={16} /></button>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: '50vh', overflowY: 'auto', paddingRight: 8 }}>
+          {keywordsList.length === 0 ? (
+            <span style={{ color: 'var(--text-3)', fontSize: 13 }}>No keywords provided.</span>
+          ) : (
+            keywordsList.map((kw, i) => (
+              <span key={i} style={{
+                background: `color-mix(in srgb, ${colorVar} 15%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${colorVar} 30%, transparent)`,
+                color: colorVar, padding: '4px 10px', borderRadius: 6, fontSize: 12
+              }}>
+                {kw}
+              </span>
+            ))
+          )}
+        </div>
+
+        {keywordsList.length > 0 && (
+          <button
+            onClick={handleCopy}
+            style={{
+              marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: `color-mix(in srgb, ${colorVar} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${colorVar} 40%, transparent)`, color: colorVar,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 20%, transparent)`}
+            onMouseOut={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 10%, transparent)`}
+          >
+            📋 Copy Raw String
+          </button>
+        )}
+      </motion.div>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    FILTERS PAGE
    ═══════════════════════════════════════════════════════════ */
 function FiltersPage() {
   const [filters, setFilters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -1296,9 +1374,8 @@ function FiltersPage() {
                 <tr>
                   <th>Campaign / Niche</th>
                   <th>Location & Employees</th>
-                  <th>Job Titles</th>
-                  <th>Keywords (Include)</th>
-                  <th>Keywords (Exclude)</th>
+                  <th>Industry</th>
+                  <th>Keywords</th>
                 </tr>
               </thead>
               <tbody>
@@ -1312,16 +1389,28 @@ function FiltersPage() {
                       <div style={{ fontSize: 12, color: 'var(--text-2)' }}>📍 {f.location || '—'}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>👥 {f.employees || '—'}</div>
                     </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-2)', maxWidth: 150 }}>{f.job_titles || '—'}</td>
-                    <td style={{ fontSize: 12, color: 'var(--emerald)', maxWidth: 200, whiteSpace: 'normal', lineHeight: '1.4' }}>
-                      {f.industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Ind:</strong> {f.industry}</div> : null}
-                      {f.keywords ? <div><strong style={{color:'var(--text-3)'}}>Key:</strong> {f.keywords}</div> : null}
-                      {!f.industry && !f.keywords && '—'}
+                    <td style={{ fontSize: 12, color: 'var(--text-2)', maxWidth: 200, lineHeight: '1.5' }}>
+                      {f.industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Inc:</strong> {f.industry}</div> : null}
+                      {f.exclude_industry ? <div><strong style={{color:'var(--text-3)'}}>Exc:</strong> <span style={{color:'var(--red)'}}>{f.exclude_industry}</span></div> : null}
+                      {!f.industry && !f.exclude_industry && '—'}
                     </td>
-                    <td style={{ fontSize: 12, color: 'var(--red)', maxWidth: 200, whiteSpace: 'normal', lineHeight: '1.4' }}>
-                      {f.exclude_industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Ind:</strong> {f.exclude_industry}</div> : null}
-                      {f.exclude_keywords ? <div><strong style={{color:'var(--text-3)'}}>Key:</strong> {f.exclude_keywords}</div> : null}
-                      {!f.exclude_industry && !f.exclude_keywords && '—'}
+                    <td style={{ display: 'flex', gap: 8, alignItems: 'center', height: '100%', padding: '16px 12px' }}>
+                      <button 
+                        onClick={() => setModalData({ type: 'include', keywords: f.keywords })}
+                        className="msg-btn msg-btn--has" 
+                        style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
+                        title="View Included Keywords"
+                      >
+                        🔑 Include
+                      </button>
+                      <button 
+                        onClick={() => setModalData({ type: 'exclude', keywords: f.exclude_keywords })}
+                        className="msg-btn msg-btn--has" 
+                        style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
+                        title="View Excluded Keywords"
+                      >
+                        🚫 Exclude
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -1330,6 +1419,10 @@ function FiltersPage() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {modalData && <KeywordsModal data={modalData} onClose={() => setModalData(null)} />}
+      </AnimatePresence>
     </motion.div>
   );
 }
