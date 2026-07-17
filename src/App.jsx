@@ -1125,9 +1125,8 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
                 <tr onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }} className={isExpanded ? 'row-expanded' : ''}>
                   <td style={{ textAlign: 'center', padding: '14px 16px' }}>
                     <button 
-                      className={`expand-arrow ${!hasContacts && lead.reply_type !== 'Contact Changed' ? 'disabled' : ''}`}
+                      className="expand-arrow"
                       onClick={(e) => toggleExpand(lead.id, e)}
-                      disabled={!hasContacts && lead.reply_type !== 'Contact Changed'}
                     >
                       {isExpanded ? '▼' : '▶'}
                     </button>
