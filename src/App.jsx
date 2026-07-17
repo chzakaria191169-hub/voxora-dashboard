@@ -2270,7 +2270,13 @@ export default function App() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [noteModalLead, setNoteModalLead] = useState(null);
   const [toast, setToast] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const campaignsRef = useRef(campaigns);
+
+  useEffect(() => {
+    campaignsRef.current = campaigns;
+  }, [campaigns]);
 
   useEffect(() => {
     // Request notification permission on load
@@ -2293,28 +2299,42 @@ export default function App() {
           console.log('Realtime payload received:', payload);
           if (payload.new && payload.new.status === 'replied' && payload.old?.status !== 'replied') {
             const lead = payload.new;
+            const camp = campaignsRef.current.find(c => c.id === lead.campaign_id);
+            const campName = camp ? camp.niche : `Campaign ${lead.campaign_id}`;
+            const clientName = lead.first_name || 'Client';
+            const companyName = lead.company || 'Company';
             
             // Play Sound
             audio.play().catch(e => console.log('Audio play failed:', e));
             
+            const title = `New Reply from ${clientName}`;
+            const body = `${companyName} — ${campName}`;
+
             // Show In-App Toast
             setToast({
               id: Date.now(),
-              title: 'New Reply Received! 🚀',
-              body: `${lead.first_name || 'A lead'} from ${lead.company || 'a company'} just replied.`,
+              title,
+              body,
               lead
             });
 
-            // Increment Bell
-            setUnreadCount(prev => prev + 1);
+            // Add to Notifications List
+            setNotifications(prev => [{
+              id: Date.now(),
+              title,
+              body,
+              lead,
+              time: new Date(),
+              read: false
+            }, ...prev]);
 
-            // Hide Toast after 5 seconds
+            // Hide Toast after 6 seconds
             setTimeout(() => setToast(null), 6000);
 
             // Desktop Notification
             if (window.Notification && Notification.permission === 'granted') {
-              new Notification('New Reply Received! 🚀', {
-                body: `${lead.first_name || 'A lead'} from ${lead.company || 'a company'} just replied.`,
+              new Notification(title, {
+                body: body,
                 icon: '/vite.svg'
               });
             }
@@ -2481,11 +2501,79 @@ export default function App() {
               >
                 <RefreshCw size={14} />
               </button>
-              <div style={{ position: 'relative', cursor: 'pointer', padding: '6px', color: 'var(--text-2)', display: 'flex' }} title="Notifications">
+              <div 
+                style={{ position: 'relative', cursor: 'pointer', padding: '6px', color: 'var(--text-2)', display: 'flex' }} 
+                title="Notifications"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications) {
+                    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                  }
+                }}
+              >
                 <Bell size={16} />
-                {unreadCount > 0 && (
+                {notifications.filter(n => !n.read).length > 0 && (
                   <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, background: 'var(--red)', borderRadius: '50%', border: '2px solid #000' }} />
                 )}
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      style={{
+                        position: 'absolute', top: '100%', right: 0, marginTop: 12,
+                        width: 320, background: 'rgba(20,20,20,0.95)', backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)', overflow: 'hidden', zIndex: 1000
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 600, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Notifications</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 400, background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 10 }}>
+                          {notifications.length} Total
+                        </span>
+                      </div>
+                      <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+                        {notifications.length === 0 ? (
+                          <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
+                            No new notifications yet.
+                          </div>
+                        ) : (
+                          notifications.map(n => (
+                            <div 
+                              key={n.id} 
+                              style={{ 
+                                padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.02)',
+                                display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer',
+                                transition: 'background 0.2s', background: n.read ? 'transparent' : 'rgba(139,92,246,0.05)'
+                              }}
+                              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                              onMouseOut={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(139,92,246,0.05)'}
+                              onClick={() => {
+                                setSelectedLead(n.lead);
+                                setShowNotifications(false);
+                              }}
+                            >
+                              <div style={{ background: 'var(--emerald)', borderRadius: '50%', padding: 8, display: 'flex', marginTop: 2 }}>
+                                <Mail size={14} color="#000" />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ color: 'white', fontSize: 13, fontWeight: 500 }}>{n.title}</div>
+                                <div style={{ color: 'var(--text-3)', fontSize: 12, marginTop: 4 }}>{n.body}</div>
+                                <div style={{ color: 'var(--text-3)', fontSize: 10, marginTop: 6, opacity: 0.7 }}>
+                                  {n.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               <div className="status-pill"><span className="pulse-dot" />3 Agents Running</div>
             </div>
@@ -2528,7 +2616,6 @@ export default function App() {
               onClick={() => {
                 setSelectedLead(toast.lead);
                 setToast(null);
-                setUnreadCount(prev => Math.max(0, prev - 1));
               }}
             >
               <div style={{ background: 'var(--emerald)', borderRadius: '50%', padding: 10, display: 'flex', boxShadow: '0 0 20px rgba(16,185,129,0.3)' }}>
