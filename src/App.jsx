@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Linkedin
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -1017,7 +1017,7 @@ function LeadIntelPanel({ lead, onClose }) {
               <div className="intel-company-actions">
                 {lead.linkedin && (
                   <a href={lead.linkedin.startsWith('http') ? lead.linkedin : `https://${lead.linkedin}`} target="_blank" rel="noreferrer" className="intel-linkedin-btn">
-                    <Linkedin size={11} /> LinkedIn <ExternalLink size={10} />
+                    <Briefcase size={11} /> LinkedIn <ExternalLink size={10} />
                   </a>
                 )}
                 {lead.website && (
