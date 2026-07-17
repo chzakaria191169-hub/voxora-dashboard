@@ -1981,7 +1981,7 @@ function NoteModal({ lead, onClose, onSave }) {
           {['red', 'green', 'blue'].map(c => (
             <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--text-2)' }}>
               <input type="radio" name="noteColor" value={c} checked={color === c} onChange={() => setColor(c)} style={{ display: 'none' }} />
-              <div style={{ width: 16, height: 16, borderRadius: '50%', border: 2px solid , background: getHex(c), outline: '2px solid transparent', outlineOffset: 2, boxShadow: color === c ?   0 10px  : 'none', transition: 'all 0.2s' }} />
+              <div style={{ width: 16, height: 16, borderRadius: '50%', border: color === c ? '2px solid #fff' : '2px solid transparent', background: getHex(c), outline: '2px solid transparent', outlineOffset: 2, boxShadow: color === c ? '0 0 10px ' + getHex(c) : 'none', transition: 'all 0.2s' }} />
               {c === 'red' ? 'Urgent / Hot' : c === 'green' ? 'Positive / Follow-up' : 'General Note'}
             </label>
           ))}
