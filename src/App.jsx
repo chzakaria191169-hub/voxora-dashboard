@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -720,7 +720,7 @@ function ComingSoonPage({ icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick }) {
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
 
   const chartData = {
@@ -836,7 +836,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
             Showing 20 of {leads.length} leads — go to Leads page for full list
@@ -1102,7 +1102,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
         <thead>
           <tr>
             <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center' }}>Intel</th>
+            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center', minWidth: 100 }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -1113,7 +1113,15 @@ function LeadsTable({ leads, loading, onLeadClick }) {
               <tr key={lead.id} onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }}>
                 <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
                 <td className="lead-name">
-                  <div>{lead.first_name || '—'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {lead.first_name || '—'}
+                    {lead.manual_note && (
+                      <div className="note-tooltip-wrapper" onClick={(e) => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}>
+                        <Paperclip size={12} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'var(--text-3)'} />
+                        <div className="note-tooltip">{lead.manual_note.length > 40 ? lead.manual_note.substring(0, 40) + '...' : lead.manual_note}</div>
+                      </div>
+                    )}
+                  </div>
                   {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{lead.job_title}</div>}
                 </td>
                 <td>
@@ -1130,13 +1138,30 @@ function LeadsTable({ leads, loading, onLeadClick }) {
                   {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                 </td>
                 <td className="col-sticky" style={{ textAlign: 'center' }}>
-                  <button
-                    className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
-                    onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
-                    title="View lead intelligence"
-                  >
-                    <Mail size={13} />
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <button
+                      className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
+                      onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
+                      title="View lead intelligence"
+                    >
+                      <Mail size={13} />
+                    </button>
+                    <button
+                      className={`msg-btn ${lead.manual_note ? 'msg-btn--has' : 'msg-btn--empty'}`}
+                      onClick={e => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}
+                      title="Add/Edit Note"
+                    >
+                      <Paperclip size={13} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'currentColor'} />
+                    </button>
+                    <button
+                      className="msg-btn msg-btn--empty"
+                      onClick={e => { e.stopPropagation(); onDeleteLead && onDeleteLead(lead.id, e); }}
+                      title="Delete Lead"
+                      style={{ color: '#ef4444' }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
@@ -1150,7 +1175,7 @@ function LeadsTable({ leads, loading, onLeadClick }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
    ═══════════════════════════════════════════════════════════ */
-function LeadsPage({ leads, loading, campaign, onLeadClick }) {
+function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -1201,7 +1226,7 @@ function LeadsPage({ leads, loading, campaign, onLeadClick }) {
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
       </div>
     </motion.div>
   );
@@ -1937,7 +1962,64 @@ function AnalyticsPage({ leads = [] }) {
 /* ═══════════════════════════════════════════════════════════
    APP ROOT
    ═══════════════════════════════════════════════════════════ */
-export default function App() {
+export default /* ═══════════════════════════════════════════════════════════
+   NOTE MODAL (الملقط)
+   ═══════════════════════════════════════════════════════════ */
+function NoteModal({ lead, onClose, onSave }) {
+  const [note, setNote] = useState(lead?.manual_note || '');
+  const [color, setColor] = useState(lead?.note_color || 'blue');
+  const [saving, setSaving] = useState(false);
+
+  if (!lead) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(lead.id, note, color);
+    setSaving(false);
+  };
+
+  const getHex = (c) => c === 'red' ? '#ef4444' : c === 'green' ? '#10b981' : '#3b82f6';
+
+  return (
+    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 99999 }}>
+      <motion.div className="intel-panel" onClick={e => e.stopPropagation()} initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} style={{ maxWidth: 420, height: 'auto', position: 'relative', margin: 'auto', top: '15vh', padding: 24, borderRadius: 16 }}>
+        <button className="intel-close" onClick={onClose}><X size={16} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <div className="intel-avatar" style={{ background: 'var(--glass-2)' }}>
+            <Paperclip size={20} color={getHex(color)} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0 }}>Attach Note</h2>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{lead.first_name || 'Client'} • {lead.company_name || lead.company || 'Company'}</div>
+          </div>
+        </div>
+
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="Type your note here... (e.g., Call back next Monday, Hot lead!)"
+          style={{ width: '100%', height: 120, background: 'var(--bg-2)', border: '1px solid var(--glass-3)', borderRadius: 8, padding: 12, color: '#fff', fontSize: 13, resize: 'none', marginBottom: 16, outline: 'none' }}
+        />
+
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+          {['red', 'green', 'blue'].map(c => (
+            <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--text-2)' }}>
+              <input type="radio" name="noteColor" value={c} checked={color === c} onChange={() => setColor(c)} style={{ display: 'none' }} />
+              <div style={{ width: 16, height: 16, borderRadius: '50%', border: color === c ? '2px solid #fff' : '2px solid transparent', background: getHex(c), outline: '2px solid transparent', outlineOffset: 2, boxShadow: color === c ? '0 0 10px ' + getHex(c) : 'none', transition: 'all 0.2s' }} />
+              {c === 'red' ? 'Urgent / Hot' : c === 'green' ? 'Positive / Follow-up' : 'General Note'}
+            </label>
+          ))}
+        </div>
+
+        <button onClick={handleSave} disabled={saving} style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 0', borderRadius: 8, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }}>
+          {saving ? 'Saving...' : 'Save Note'}
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1947,6 +2029,24 @@ export default function App() {
   const [stats, setStats] = useState({ total: 0, sent: 0, followups: 0, replied: 0, interested: 0, meeting_booked: 0, archived: 0 });
   const [leads, setLeads] = useState([]);
   const [selectedLead, setSelectedLead] = useState(null);
+  const [noteModalLead, setNoteModalLead] = useState(null);
+
+  const handleDeleteLead = async (leadId, e) => {
+    if(e) e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return;
+    try {
+      await supabase.from('leads').delete().eq('id', leadId);
+      setLeads(prev => prev.filter(l => l.id !== leadId));
+    } catch(err) { console.error('Delete error', err); }
+  };
+
+  const handleSaveNote = async (leadId, note, color) => {
+    try {
+      await supabase.from('leads').update({ manual_note: note, note_color: color }).eq('id', leadId);
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, manual_note: note, note_color: color } : l));
+      setNoteModalLead(null);
+    } catch(err) { console.error('Save note error', err); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -1996,9 +2096,9 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
@@ -2058,6 +2158,11 @@ export default function App() {
         <AnimatePresence>
           {selectedLead && (
             <LeadIntelPanel lead={selectedLead} onClose={() => setSelectedLead(null)} />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {noteModalLead && (
+            <NoteModal lead={noteModalLead} onClose={() => setNoteModalLead(null)} onSave={handleSaveNote} />
           )}
         </AnimatePresence>
       </div>
