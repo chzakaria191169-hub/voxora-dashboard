@@ -2234,7 +2234,7 @@ export default function App() {
     const { data: camp } = await supabase.from('campaigns').select('*').eq('id', cid).single();
     setCampaign(camp);
 
-    const { data, error } = await supabase.from('leads').select('*').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
+    const { data, error } = await supabase.from('leads').select('*, lead_workspace(*), lead_contacts(*)').eq('campaign_id', cid).order('id', { ascending: false }).range(0, 9999);
     if (error) console.error(error);
     if (data) {
       setStats({
@@ -2248,7 +2248,20 @@ export default function App() {
         interested: data.filter(l => l.status === 'interested').length,
         meeting_booked: data.filter(l => l.status === 'meeting_booked').length,
       });
-      setLeads(data);
+      const mergedLeads = data.map(lead => {
+        const ws = lead.lead_workspace && lead.lead_workspace.length > 0 ? lead.lead_workspace[0] : null;
+        return {
+          ...lead,
+          display_name: ws?.display_name || null,
+          display_email: ws?.display_email || null,
+          display_company: ws?.display_company || null,
+          reply_type: ws?.reply_type || 'Standard',
+          manual_note: ws?.manual_note || lead.manual_note,
+          note_color: ws?.note_color || lead.note_color,
+          contacts: lead.lead_contacts || []
+        };
+      });
+      setLeads(mergedLeads);
     }
     if (isRefresh) setRefreshing(false); else setLoading(false);
   }, []);
