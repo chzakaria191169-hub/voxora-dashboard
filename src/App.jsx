@@ -1093,7 +1093,7 @@ function LeadIntelPanel({ lead, onClose }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
    ═══════════════════════════════════════════════════════════ */
-function LeadsTable({ leads, loading, onLeadClick }) {
+function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) {
   if (loading) return <div className="empty-state">Loading leads...</div>;
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
   return (
