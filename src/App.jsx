@@ -2290,7 +2290,8 @@ export default function App() {
           table: 'leads',
         },
         (payload) => {
-          if (payload.new.status === 'replied' && payload.old.status !== 'replied') {
+          console.log('Realtime payload received:', payload);
+          if (payload.new && payload.new.status === 'replied' && payload.old?.status !== 'replied') {
             const lead = payload.new;
             
             // Play Sound
