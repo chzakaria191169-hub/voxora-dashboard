@@ -2191,6 +2191,33 @@ export default function App() {
     } catch(err) { console.error('Save note error', err); }
   };
 
+  const handleUpdateWorkspace = async (leadId, updates) => {
+    try {
+      await supabase.from('lead_workspace').upsert({ lead_id: leadId, ...updates }, { onConflict: 'lead_id' });
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updates } : l));
+    } catch(err) { console.error('Workspace update error', err); }
+  };
+
+  const handleAddContact = async (leadId, contact) => {
+    try {
+      const { data, error } = await supabase.from('lead_contacts').insert({ lead_id: leadId, ...contact }).select();
+      if (data && data[0]) {
+        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, contacts: [...l.contacts, data[0]] } : l));
+      }
+    } catch(err) { console.error('Add contact error', err); }
+  };
+
+  const handleUpdateContact = async (contactId, updates) => {
+    try {
+      await supabase.from('lead_contacts').update(updates).eq('id', contactId);
+      setLeads(prev => prev.map(l => ({
+        ...l,
+        contacts: l.contacts.map(c => c.id === contactId ? { ...c, ...updates } : c)
+      })));
+    } catch(err) { console.error('Update contact error', err); }
+  };
+
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from('campaigns').select('*').order('id', { ascending: false });
