@@ -2445,3 +2445,200 @@ tbody tr:hover .col-sticky {
   border-style: solid;
   border-color: rgba(15, 15, 20, 0.95) transparent transparent transparent;
 }
+
+/* ============== NESTED CONTACTS & INLINE EDITING ============== */
+.inline-editable {
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: all 0.2s ease;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+}
+.inline-editable:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom-color: var(--text-3);
+  color: #fff;
+}
+.inline-edit-input {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--purple);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.expand-arrow {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+.expand-arrow:hover:not(.disabled) {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+.expand-arrow.disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.contacts-badge {
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+}
+
+.row-expanded td {
+  border-bottom: none !important;
+  background: rgba(255,255,255,0.02);
+}
+
+.sub-row-container {
+  background: rgba(4, 4, 15, 0.95);
+  box-shadow: inset 0 8px 10px -10px rgba(0,0,0,0.5);
+}
+
+.sub-contacts-panel {
+  padding: 16px 28px 24px 60px;
+  border-left: 2px solid var(--purple);
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.sub-contacts-header {
+  margin-bottom: 12px;
+}
+
+.sub-contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.sub-contacts-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sub-contacts-table td {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-2);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.sub-select {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+.sub-select:hover {
+  border-color: var(--text-3);
+  color: #fff;
+}
+.sub-select option {
+  background: var(--bg-deep);
+  color: #fff;
+}
+
+.add-contact-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+}
+.add-contact-form input, .add-contact-form select {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  color: #fff;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+.btn-save-contact {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-save-contact:hover { background: var(--purple-bright); }
+.btn-cancel-contact {
+  background: transparent;
+  color: var(--text-3);
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.btn-cancel-contact:hover { color: var(--red); }
+
+.btn-add-contact {
+  background: transparent;
+  color: var(--purple-bright);
+  border: 1px dashed var(--purple-dim);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-add-contact:hover {
+  background: var(--purple-dim);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+.reply-type-select {
+  background: var(--bg-card);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+.reply-type-select:hover {
+  border-color: var(--text-3);
+  color: #fff;
+}
+.reply-type-select option {
+  background: var(--bg-deep);
+  color: #fff;
+}

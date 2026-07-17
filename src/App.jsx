@@ -720,7 +720,7 @@ function ComingSoonPage({ icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick }) {
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
 
   const chartData = {
@@ -836,7 +836,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
             Showing 20 of {leads.length} leads — go to Leads page for full list
@@ -1093,7 +1093,14 @@ function LeadIntelPanel({ lead, onClose }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
    ═══════════════════════════════════════════════════════════ */
-function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) {
+function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
+  const [expanded, setExpanded] = useState({});
+
+  const toggleExpand = (id, e) => {
+    if(e) e.stopPropagation();
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   if (loading) return <div className="empty-state">Loading leads...</div>;
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
   return (
@@ -1101,69 +1108,109 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) 
       <table className="leads-table">
         <thead>
           <tr>
-            <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center', minWidth: 100 }}>Actions</th>
+            <th style={{ width: 40, padding: '12px 16px' }}></th>
+            <th>Name</th><th>Company</th><th>Email</th>
+            <th>Status</th><th style={{ width: 140 }}>Reply Type</th><th>Sender</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center', minWidth: 100 }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {leads.map((lead, i) => {
             const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at || lead.sent_at;
             const hasMsgs = !!(lead.cold_email_body || lead.message || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
+            const hasContacts = lead.contacts && lead.contacts.length > 0;
+            const isExpanded = expanded[lead.id];
+            
             return (
-              <tr key={lead.id} onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }}>
-                <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
-                <td className="lead-name">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {lead.first_name || '—'}
-                    {lead.manual_note && (
-                      <div className="note-tooltip-wrapper" onClick={(e) => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}>
-                        <Paperclip size={12} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'var(--text-3)'} />
-                        <div className="note-tooltip">{lead.manual_note.length > 40 ? lead.manual_note.substring(0, 40) + '...' : lead.manual_note}</div>
+              <React.Fragment key={lead.id}>
+                <tr onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }} className={isExpanded ? 'row-expanded' : ''}>
+                  <td style={{ textAlign: 'center', padding: '14px 16px' }}>
+                    <button 
+                      className={`expand-arrow ${!hasContacts && lead.reply_type !== 'Contact Changed' ? 'disabled' : ''}`}
+                      onClick={(e) => toggleExpand(lead.id, e)}
+                      disabled={!hasContacts && lead.reply_type !== 'Contact Changed'}
+                    >
+                      {isExpanded ? '▼' : '▶'}
+                    </button>
+                  </td>
+                  <td className="lead-name">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <InlineEditable value={lead.display_name} onSave={(val) => onUpdateWorkspace(lead.id, { display_name: val })} placeholder={lead.first_name || '—'} />
+                          {hasContacts && <span className="contacts-badge">👥 {lead.contacts.length}</span>}
+                          {lead.manual_note && (
+                            <div className="note-tooltip-wrapper" onClick={(e) => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}>
+                              <Paperclip size={12} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'var(--text-3)'} />
+                              <div className="note-tooltip">{lead.manual_note.length > 40 ? lead.manual_note.substring(0, 40) + '...' : lead.manual_note}</div>
+                            </div>
+                          )}
+                        </div>
+                        {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{lead.job_title}</div>}
                       </div>
-                    )}
-                  </div>
-                  {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{lead.job_title}</div>}
-                </td>
-                <td>
-                  {(lead.website || lead.Website)
-                    ? <a href={(lead.website || lead.Website).startsWith('http') ? (lead.website || lead.Website) : `https://${lead.website || lead.Website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || '—'}</a>
-                    : (lead.company_name || lead.company || '—')
-                  }
-                </td>
-                <td className="lead-email">{lead.email}</td>
-                <td><StatusBadge status={lead.status} /></td>
-                <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || '—'}</span></td>
-                <td>{lead.niche_tag ? <span className="niche-tag">{lead.niche_tag}</span> : (lead.niche ? <span className="niche-tag">{lead.niche}</span> : '—')}</td>
-                <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-                </td>
-                <td className="col-sticky" style={{ textAlign: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                    <button
-                      className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
-                      onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
-                      title="View lead intelligence"
+                    </div>
+                  </td>
+                  <td>
+                    <InlineEditable value={lead.display_company} onSave={(val) => onUpdateWorkspace(lead.id, { display_company: val })} placeholder={lead.company_name || lead.company || '—'} />
+                  </td>
+                  <td className="lead-email">
+                    <InlineEditable value={lead.display_email} onSave={(val) => onUpdateWorkspace(lead.id, { display_email: val })} placeholder={lead.email || '—'} />
+                  </td>
+                  <td><StatusBadge status={lead.status} /></td>
+                  <td>
+                    <select 
+                      className="reply-type-select" 
+                      value={lead.reply_type}
+                      onChange={(e) => {
+                        onUpdateWorkspace(lead.id, { reply_type: e.target.value });
+                        if(e.target.value === 'Contact Changed') setExpanded(prev => ({ ...prev, [lead.id]: true }));
+                      }}
+                      onClick={e => e.stopPropagation()}
                     >
-                      <Mail size={13} />
-                    </button>
-                    <button
-                      className={`msg-btn ${lead.manual_note ? 'msg-btn--has' : 'msg-btn--empty'}`}
-                      onClick={e => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}
-                      title="Add/Edit Note"
-                    >
-                      <Paperclip size={13} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'currentColor'} />
-                    </button>
-                    <button
-                      className="msg-btn msg-btn--empty"
-                      onClick={e => { e.stopPropagation(); onDeleteLead && onDeleteLead(lead.id, e); }}
-                      title="Delete Lead"
-                      style={{ color: '#ef4444' }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                      <option value="Standard">Standard</option>
+                      <option value="Contact Changed">Contact Changed</option>
+                      <option value="Out of Office">Out of Office</option>
+                      <option value="Not Interested">Not Interested</option>
+                    </select>
+                  </td>
+                  <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || '—'}</span></td>
+                  <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                    {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                  </td>
+                  <td className="col-sticky" style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <button
+                        className={`msg-btn ${hasMsgs ? 'msg-btn--has' : 'msg-btn--empty'}`}
+                        onClick={e => { e.stopPropagation(); onLeadClick && onLeadClick(lead); }}
+                        title="View lead intelligence"
+                      >
+                        <Mail size={13} />
+                      </button>
+                      <button
+                        className={`msg-btn ${lead.manual_note ? 'msg-btn--has' : 'msg-btn--empty'}`}
+                        onClick={e => { e.stopPropagation(); onNoteClick && onNoteClick(lead); }}
+                        title="Add/Edit Note"
+                      >
+                        <Paperclip size={13} color={lead.note_color === 'red' ? '#ef4444' : lead.note_color === 'green' ? '#10b981' : lead.note_color === 'blue' ? '#3b82f6' : 'currentColor'} />
+                      </button>
+                      <button
+                        className="msg-btn msg-btn--empty"
+                        onClick={e => { e.stopPropagation(); onDeleteLead && onDeleteLead(lead.id, e); }}
+                        title="Delete Lead"
+                        style={{ color: '#ef4444' }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr className="sub-row-container">
+                    <td colSpan="9" style={{ padding: 0, background: 'rgba(0,0,0,0.2)' }}>
+                      <SubContactsPanel lead={lead} onAddContact={onAddContact} onUpdateContact={onUpdateContact} />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             );
           })}
         </tbody>
@@ -1175,7 +1222,7 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) 
 /* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
    ═══════════════════════════════════════════════════════════ */
-function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick }) {
+function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -1226,7 +1273,7 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} />
       </div>
     </motion.div>
   );
@@ -1962,6 +2009,102 @@ function AnalyticsPage({ leads = [] }) {
 /* ═══════════════════════════════════════════════════════════
    APP ROOT
    ═══════════════════════════════════════════════════════════ */
+
+function InlineEditable({ value, onSave, placeholder = '—' }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [val, setVal] = useState(value);
+
+  useEffect(() => { setVal(value); }, [value]);
+
+  const handleSave = () => {
+    setIsEditing(false);
+    if (val !== value) onSave(val);
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        autoFocus
+        value={val || ''}
+        onChange={e => setVal(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setIsEditing(false); setVal(value); } }}
+        className="inline-edit-input"
+        onClick={e => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <span className="inline-editable" onClick={e => { e.stopPropagation(); setIsEditing(true); }}>
+      {value || placeholder}
+    </span>
+  );
+}
+
+function SubContactsPanel({ lead, onAddContact, onUpdateContact }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', email: '', position: '', status: 'Not Contacted', priority: 'Medium' });
+
+  const handleSaveNew = async () => {
+    if (!newContact.name) return;
+    await onAddContact(lead.id, newContact);
+    setShowAdd(false);
+    setNewContact({ name: '', email: '', position: '', status: 'Not Contacted', priority: 'Medium' });
+  };
+
+  return (
+    <div className="sub-contacts-panel">
+      <div className="sub-contacts-header">
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--cyan)' }}>REFERRED CONTACTS</div>
+      </div>
+      {lead.contacts && lead.contacts.length > 0 && (
+        <table className="sub-contacts-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Position</th><th>Email</th><th>Status</th><th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lead.contacts.map(c => (
+              <tr key={c.id}>
+                <td style={{ fontWeight: 500, color: '#fff' }}><InlineEditable value={c.name} onSave={val => onUpdateContact(c.id, { name: val })} /></td>
+                <td><InlineEditable value={c.position} onSave={val => onUpdateContact(c.id, { position: val })} /></td>
+                <td><InlineEditable value={c.email} onSave={val => onUpdateContact(c.id, { email: val })} /></td>
+                <td>
+                  <select value={c.status} onChange={e => onUpdateContact(c.id, { status: e.target.value })} className="sub-select">
+                    <option>Not Contacted</option><option>Contacted</option><option>Replied</option><option>Interested</option><option>Meeting</option><option>Closed</option>
+                  </select>
+                </td>
+                <td>
+                  <select value={c.priority} onChange={e => onUpdateContact(c.id, { priority: e.target.value })} className="sub-select">
+                    <option>High</option><option>Medium</option><option>Low</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      
+      {showAdd ? (
+        <div className="add-contact-form">
+          <input placeholder="Name" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} autoFocus />
+          <input placeholder="Position" value={newContact.position} onChange={e => setNewContact({...newContact, position: e.target.value})} />
+          <input placeholder="Email" value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} />
+          <select value={newContact.status} onChange={e => setNewContact({...newContact, status: e.target.value})}>
+            <option>Not Contacted</option><option>Contacted</option><option>Replied</option>
+          </select>
+          <button onClick={handleSaveNew} className="btn-save-contact">Save</button>
+          <button onClick={() => setShowAdd(false)} className="btn-cancel-contact"><X size={14}/></button>
+        </div>
+      ) : (
+        <button className="btn-add-contact" onClick={() => setShowAdd(true)}>+ Add Contact</button>
+      )}
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════
    NOTE MODAL (الملقط)
    ═══════════════════════════════════════════════════════════ */
@@ -2096,9 +2239,9 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
