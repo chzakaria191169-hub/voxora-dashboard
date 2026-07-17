@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Bell
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -2269,6 +2269,63 @@ export default function App() {
   const [leads, setLeads] = useState([]);
   const [selectedLead, setSelectedLead] = useState(null);
   const [noteModalLead, setNoteModalLead] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // Request notification permission on load
+    if (window.Notification && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
+    const audio = new Audio('/notification.mp3');
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          if (payload.new.status === 'replied' && payload.old.status !== 'replied') {
+            const lead = payload.new;
+            
+            // Play Sound
+            audio.play().catch(e => console.log('Audio play failed:', e));
+            
+            // Show In-App Toast
+            setToast({
+              id: Date.now(),
+              title: 'New Reply Received! 🚀',
+              body: `${lead.first_name || 'A lead'} from ${lead.company || 'a company'} just replied.`,
+              lead
+            });
+
+            // Increment Bell
+            setUnreadCount(prev => prev + 1);
+
+            // Hide Toast after 5 seconds
+            setTimeout(() => setToast(null), 6000);
+
+            // Desktop Notification
+            if (window.Notification && Notification.permission === 'granted') {
+              new Notification('New Reply Received! 🚀', {
+                body: `${lead.first_name || 'A lead'} from ${lead.company || 'a company'} just replied.`,
+                icon: '/vite.svg'
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleDeleteLead = async (leadId, e) => {
     if(e) e.stopPropagation();
@@ -2423,6 +2480,12 @@ export default function App() {
               >
                 <RefreshCw size={14} />
               </button>
+              <div style={{ position: 'relative', cursor: 'pointer', padding: '6px', color: 'var(--text-2)', display: 'flex' }} title="Notifications">
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, background: 'var(--red)', borderRadius: '50%', border: '2px solid #000' }} />
+                )}
+              </div>
               <div className="status-pill"><span className="pulse-dot" />3 Agents Running</div>
             </div>
           </motion.div>
@@ -2442,6 +2505,45 @@ export default function App() {
         <AnimatePresence>
           {noteModalLead && (
             <NoteModal lead={noteModalLead} onClose={() => setNoteModalLead(null)} onSave={handleSaveNote} />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, x: 50, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 50, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              style={{
+                position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
+                background: 'rgba(15, 15, 15, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 16, padding: '16px 20px', width: 340,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                display: 'flex', gap: 16, alignItems: 'flex-start',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                setSelectedLead(toast.lead);
+                setToast(null);
+                setUnreadCount(prev => Math.max(0, prev - 1));
+              }}
+            >
+              <div style={{ background: 'var(--emerald)', borderRadius: '50%', padding: 10, display: 'flex', boxShadow: '0 0 20px rgba(16,185,129,0.3)' }}>
+                <Mail size={20} color="#000" />
+              </div>
+              <div style={{ flex: 1, paddingTop: 2 }}>
+                <div style={{ color: 'white', fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em' }}>{toast.title}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>{toast.body}</div>
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setToast(null); }} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 4, display: 'flex' }}
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
