@@ -1,11 +1,11 @@
-﻿import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -17,9 +17,9 @@ import './index.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   VOXORA AI NETWORK CANVAS â€” exact DNA from voxora.agency
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   VOXORA AI NETWORK CANVAS — exact DNA from voxora.agency
+   ═══════════════════════════════════════════════════════════ */
 function AINetworkCanvas() {
   const canvasRef = useRef(null);
   const mouse = useRef({ x: -9999, y: -9999 });
@@ -54,7 +54,7 @@ function AINetworkCanvas() {
     function drawFrame() {
       ctx.clearRect(0, 0, width, height);
 
-      // Atmospheric glow orbs â€” like voxora.agency
+      // Atmospheric glow orbs — like voxora.agency
       const g1 = ctx.createRadialGradient(width * 0.75, height * 0.2, 0, width * 0.75, height * 0.2, 500);
       g1.addColorStop(0, 'rgba(139,92,246,0.07)');
       g1.addColorStop(1, 'transparent');
@@ -145,9 +145,9 @@ function AINetworkCanvas() {
   return <canvas ref={canvasRef} className="canvas-bg" />;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   SPOTLIGHT CARD â€” Premium Web3/SaaS hover effect
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   SPOTLIGHT CARD — Premium Web3/SaaS hover effect
+   ═══════════════════════════════════════════════════════════ */
 function SpotlightCard({ children, className = '', style = {} }) {
   const ref = useRef(null);
   const [pos, setPos] = useState({ x: 0, y: 0, opacity: 0 });
@@ -187,9 +187,9 @@ function SpotlightCard({ children, className = '', style = {} }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   CYBER SCRAMBLE TEXT â€” Hacker decode effect
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   CYBER SCRAMBLE TEXT — Hacker decode effect
+   ═══════════════════════════════════════════════════════════ */
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*![]{}';
 function CyberScramble({ text, trigger = 0, duration = 900 }) {
   const [display, setDisplay] = useState(text);
@@ -230,24 +230,24 @@ function CyberScramble({ text, trigger = 0, duration = 900 }) {
   return <span style={{ fontFamily: 'monospace' }}>{display}</span>;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   BRAIN FEED TERMINAL â€” The Voxora AI Operations Log
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   BRAIN FEED TERMINAL — The Voxora AI Operations Log
+   ═══════════════════════════════════════════════════════════ */
 const BRAIN_MESSAGES = [
   { tag: 'AI Engine', color: '#8b5cf6', msg: 'Scraping and analyzing 2,500 new targets from Apollo.io...' },
-  { tag: 'SMTP Router', color: '#06b6d4', msg: 'Dispatching cold email batch via Inbox #7 â€” vox-outreach-07@...' },
+  { tag: 'SMTP Router', color: '#06b6d4', msg: 'Dispatching cold email batch via Inbox #7 — vox-outreach-07@...' },
   { tag: 'Outbound', color: '#8b5cf6', msg: 'Sent 1,420 automated follow-ups across 20 inboxes.' },
   { tag: 'Reply AI', color: '#10b981', msg: 'Detected 3 positive replies. Routing to Unified Inbox...' },
-  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Niche scoring complete: Healthcare SaaS â€” Match Score 94%' },
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Niche scoring complete: Healthcare SaaS — Match Score 94%' },
   { tag: 'Scheduler', color: '#f59e0b', msg: 'Follow-up sequence queued for 847 leads at 09:00 UTC.' },
-  { tag: 'Guardian', color: '#ef4444', msg: 'Bounce detected: contact@oldomain.net â€” auto-archived.' },
+  { tag: 'Guardian', color: '#ef4444', msg: 'Bounce detected: contact@oldomain.net — auto-archived.' },
   { tag: 'Scraper', color: '#06b6d4', msg: 'LinkedIn profile enrichment: 120 leads updated with job titles.' },
   { tag: 'AI Engine', color: '#8b5cf6', msg: 'Subject line A/B test: Variant B +22% open rate. Switching...' },
   { tag: 'Outbound', color: '#8b5cf6', msg: 'Campaign #3 running. 2,141 emails delivered. 0 spam flags.' },
-  { tag: 'Reply AI', color: '#10b981', msg: 'Positive intent flagged: "Can we schedule a call?" â€” SAAS NICHE' },
+  { tag: 'Reply AI', color: '#10b981', msg: 'Positive intent flagged: "Can we schedule a call?" — SAAS NICHE' },
   { tag: 'Watchdog', color: '#f59e0b', msg: 'SMTP health check passed: 20/20 inboxes active. Warmup: 99.8%' },
-  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Personalisation tokens injected: 2,500 emails â€” 100% unique.' },
-  { tag: 'Scraper', color: '#06b6d4', msg: 'New niche unlocked: Logistics Plus â€” 380 validated leads ready.' },
+  { tag: 'AI Engine', color: '#8b5cf6', msg: 'Personalisation tokens injected: 2,500 emails — 100% unique.' },
+  { tag: 'Scraper', color: '#06b6d4', msg: 'New niche unlocked: Logistics Plus — 380 validated leads ready.' },
 ];
 
 function BrainFeed() {
@@ -309,9 +309,9 @@ function BrainFeed() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   LIVE SYSTEM TICKER â€” Continuous marquee bar
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   LIVE SYSTEM TICKER — Continuous marquee bar
+   ═══════════════════════════════════════════════════════════ */
 function SystemTicker() {
   const items = [
     '/// SMTP HEALTH: 99.9%',
@@ -336,9 +336,9 @@ function SystemTicker() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   3D MATRIX GLOBE â€” Canvas-based wireframe globe
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   3D MATRIX GLOBE — Canvas-based wireframe globe
+   ═══════════════════════════════════════════════════════════ */
 function MatrixGlobe() {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
@@ -512,9 +512,9 @@ function MatrixGlobe() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    ANIMATED COUNTER
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function AnimCounter({ value, loading }) {
   const [n, setN] = useState(0);
   useEffect(() => {
@@ -527,9 +527,9 @@ function AnimCounter({ value, loading }) {
   return <>{n}</>;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    STATUS BADGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function StatusBadge({ status }) {
   const map = {
     new: 'new',
@@ -567,9 +567,9 @@ function StatusBadge({ status }) {
   return <span className={`status-badge badge-${cls}`}><span className="status-dot" />{labels[status] || status?.replace(/_/g, ' ')}</span>;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    CAMPAIGN SELECTOR DROPDOWN
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function CampaignSelector({ campaigns, selectedId, onSelect, loading }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -587,7 +587,7 @@ function CampaignSelector({ campaigns, selectedId, onSelect, loading }) {
     <div className="campaign-selector" ref={ref}>
       <button className="campaign-selector__btn" onClick={() => setOpen(!open)}>
         <span className="campaign-selector__dot" />
-        <span>{selected ? `Campaign #${selected.id} Â· ${selected.name}` : 'Select Campaign'}</span>
+        <span>{selected ? `Campaign #${selected.id} · ${selected.name}` : 'Select Campaign'}</span>
         <ChevronDown size={13} style={{ marginLeft: 'auto', opacity: 0.5, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
 
@@ -611,13 +611,13 @@ function CampaignSelector({ campaigns, selectedId, onSelect, loading }) {
                 >
                   <span className="campaign-selector__item-dot" />
                   <div>
-                    <div className="campaign-selector__item-name">Campaign #{c.id} Â· {c.name}</div>
+                    <div className="campaign-selector__item-name">Campaign #{c.id} · {c.name}</div>
                     <div className="campaign-selector__item-sub">
                       {c.niche && <span className="niche-tag">{c.niche}</span>}
                       {c.created_at && <span>{new Date(c.created_at).toLocaleDateString()}</span>}
                     </div>
                   </div>
-                  {c.id === selectedId && <span className="campaign-selector__check">âœ“</span>}
+                  {c.id === selectedId && <span className="campaign-selector__check">✓</span>}
                 </button>
               ))
             )}
@@ -628,9 +628,9 @@ function CampaignSelector({ campaigns, selectedId, onSelect, loading }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    SIDEBAR
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function Sidebar({ activePage, onNavigate }) {
   const navItems = [
     { l: 'Dashboard', i: <LayoutDashboard size={15} />, page: 'dashboard' },
@@ -681,9 +681,9 @@ function Sidebar({ activePage, onNavigate }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   METRIC CARD â€” with Spotlight hover
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   METRIC CARD — with Spotlight hover
+   ═══════════════════════════════════════════════════════════ */
 function MetricCard({ label, value, icon, variant, badge, sub, loading, idx }) {
   return (
     <SpotlightCard className={`glass-card metric-card metric-${variant}`}>
@@ -698,9 +698,9 @@ function MetricCard({ label, value, icon, variant, badge, sub, loading, idx }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    COMING SOON PAGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function ComingSoonPage({ icon, title, desc }) {
   return (
     <motion.div
@@ -717,10 +717,10 @@ function ComingSoonPage({ icon, title, desc }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick }) {
+   ═══════════════════════════════════════════════════════════ */
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
 
   const chartData = {
@@ -743,7 +743,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 
   return (
     <div className="content">
-      {/* HERO â€” CINEMATIC COMMAND CENTER */}
+      {/* HERO — CINEMATIC COMMAND CENTER */}
       <motion.div
         className="hero-banner"
         initial={{ opacity: 0, y: 20 }}
@@ -788,7 +788,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
         {/* Matrix Globe */}
         <SpotlightCard className="glass-card globe-card">
           <div className="card-title" style={{ marginBottom: 4 }}>Global Outreach Matrix</div>
-          <div className="card-subtitle" style={{ marginBottom: 10 }}>Live signal â€” emails in flight across the world</div>
+          <div className="card-subtitle" style={{ marginBottom: 10 }}>Live signal — emails in flight across the world</div>
           <MatrixGlobe />
         </SpotlightCard>
 
@@ -810,7 +810,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
           </div>
           <div className="agent-row-glass"><div className="agent-dot-pulse active" /><div className="agent-info"><div className="agent-name">Reply Detection</div><div className="agent-desc">Monitoring 20 SMTP inboxes</div></div><span className="agent-badge badge-active">Live</span></div>
           <div className="agent-row-glass"><div className="agent-dot-pulse scheduled" /><div className="agent-info"><div className="agent-name">Follow-up Engine</div><div className="agent-desc">Next run: 9:00 AM</div></div><span className="agent-badge badge-scheduled">Queued</span></div>
-          <div className="agent-row-glass"><div className="agent-dot-pulse active" /><div className="agent-info"><div className="agent-name">Archive Cleaner</div><div className="agent-desc">Day 13 â†’ auto-archive</div></div><span className="agent-badge badge-active">Live</span></div>
+          <div className="agent-row-glass"><div className="agent-dot-pulse active" /><div className="agent-info"><div className="agent-name">Archive Cleaner</div><div className="agent-desc">Day 13 → auto-archive</div></div><span className="agent-badge badge-active">Live</span></div>
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 4 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)', marginBottom: 8 }}><span>Archived leads</span><span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{stats.archived}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)' }}><span>Meetings booked</span><span style={{ color: 'var(--emerald)', fontWeight: 600 }}>{stats.meeting_booked}</span></div>
@@ -831,15 +831,15 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
           <div>
             <div className="card-title">Recent Leads</div>
             <div className="card-subtitle" style={{ marginBottom: 0 }}>
-              {campaign ? `Campaign #${campaign.id} Â· ${campaign.name}` : 'â€”'} Â· {leads.length} leads total
+              {campaign ? `Campaign #${campaign.id} · ${campaign.name}` : '—'} · {leads.length} leads total
               {campaign?.niche && <span className="niche-tag" style={{ marginLeft: 8 }}>{campaign.niche}</span>}
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
-            Showing 20 of {leads.length} leads â€” go to Leads page for full list
+            Showing 20 of {leads.length} leads — go to Leads page for full list
           </div>
         )}
       </motion.div>
@@ -847,9 +847,9 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    OUTREACH TIMELINE ITEM
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFuture, delay = 0 }) {
   const [expanded, setExpanded] = useState(false);
   const hasMeta = subject || body || sender || sentAt;
@@ -922,9 +922,9 @@ function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFut
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    LEAD INTELLIGENCE PANEL (Slide-over)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function LeadIntelPanel({ lead, onClose }) {
   if (!lead) return null;
 
@@ -992,7 +992,7 @@ function LeadIntelPanel({ lead, onClose }) {
         <div className="intel-panel-header">
           <div className="intel-avatar">{initials}</div>
           <div className="intel-header-info">
-            <div className="intel-name">{lead.first_name || 'â€”'}</div>
+            <div className="intel-name">{lead.first_name || '—'}</div>
             <div className="intel-email">{lead.email}</div>
           </div>
           <button className="intel-close" onClick={onClose}><X size={16} /></button>
@@ -1005,7 +1005,7 @@ function LeadIntelPanel({ lead, onClose }) {
               <div className="intel-company-left">
                 <Building2 size={14} style={{ color: 'var(--purple-bright)', flexShrink: 0 }} />
                 <div>
-                  <div className="intel-company-name">{lead.company_name || lead.company || 'â€”'}</div>
+                  <div className="intel-company-name">{lead.company_name || lead.company || '—'}</div>
                   {lead.job_title && <div className="intel-job-title">{lead.job_title}</div>}
                 </div>
               </div>
@@ -1090,10 +1090,10 @@ function LeadIntelPanel({ lead, onClose }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) {
+   ═══════════════════════════════════════════════════════════ */
+function LeadsTable({ leads, loading, onLeadClick }) {
   if (loading) return <div className="empty-state">Loading leads...</div>;
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
   return (
@@ -1102,7 +1102,7 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) 
         <thead>
           <tr>
             <th>#</th><th>Name</th><th>Company</th><th>Email</th>
-            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center', minWidth: 100 }}>Actions</th>
+            <th>Status</th><th>Sender</th><th>Niche</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center' }}>Intel</th>
           </tr>
         </thead>
         <tbody>
@@ -1113,21 +1113,21 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) 
               <tr key={lead.id} onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }}>
                 <td style={{ color: 'var(--text-3)', fontSize: 11 }}>{i + 1}</td>
                 <td className="lead-name">
-                  <div>{lead.first_name || 'â€”'}</div>
+                  <div>{lead.first_name || '—'}</div>
                   {lead.job_title && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{lead.job_title}</div>}
                 </td>
                 <td>
                   {(lead.website || lead.Website)
-                    ? <a href={(lead.website || lead.Website).startsWith('http') ? (lead.website || lead.Website) : `https://${lead.website || lead.Website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || 'â€”'}</a>
-                    : (lead.company_name || lead.company || 'â€”')
+                    ? <a href={(lead.website || lead.Website).startsWith('http') ? (lead.website || lead.Website) : `https://${lead.website || lead.Website}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="company-link">{lead.company_name || lead.company || '—'}</a>
+                    : (lead.company_name || lead.company || '—')
                   }
                 </td>
                 <td className="lead-email">{lead.email}</td>
                 <td><StatusBadge status={lead.status} /></td>
-                <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || 'â€”'}</span></td>
-                <td>{lead.niche_tag ? <span className="niche-tag">{lead.niche_tag}</span> : (lead.niche ? <span className="niche-tag">{lead.niche}</span> : 'â€”')}</td>
+                <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || '—'}</span></td>
+                <td>{lead.niche_tag ? <span className="niche-tag">{lead.niche_tag}</span> : (lead.niche ? <span className="niche-tag">{lead.niche}</span> : '—')}</td>
                 <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'â€”'}
+                  {lastSentAt ? new Date(lastSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                 </td>
                 <td className="col-sticky" style={{ textAlign: 'center' }}>
                   <button
@@ -1147,10 +1147,10 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick }) 
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick }) {
+   ═══════════════════════════════════════════════════════════ */
+function LeadsPage({ leads, loading, campaign, onLeadClick }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -1174,7 +1174,7 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       <div className="page-header">
         <div>
           <h1 className="page-title">All Leads</h1>
-          <p className="page-sub">{campaign ? `Campaign #${campaign.id} Â· ${campaign.name}` : 'â€”'} Â· {leads.length} total leads</p>
+          <p className="page-sub">{campaign ? `Campaign #${campaign.id} · ${campaign.name}` : '—'} · {leads.length} total leads</p>
         </div>
       </div>
 
@@ -1201,22 +1201,22 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} />
       </div>
     </motion.div>
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    CAMPAIGNS PAGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading }) {
   return (
     <motion.div className="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Campaigns</h1>
-          <p className="page-sub">{campaigns.length} campaigns Â· Click to switch active view</p>
+          <p className="page-sub">{campaigns.length} campaigns · Click to switch active view</p>
         </div>
       </div>
 
@@ -1241,16 +1241,16 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
             </div>
             {c.niche && <span className="niche-tag" style={{ marginTop: 8, display: 'inline-block' }}>{c.niche}</span>}
             <div className="campaign-card__meta">
-              <span>ðŸ“… {c.created_at ? new Date(c.created_at).toLocaleDateString() : 'N/A'}</span>
+              <span>📅 {c.created_at ? new Date(c.created_at).toLocaleDateString() : 'N/A'}</span>
               {c.id === selectedCampaignId && !loading && (
-                <span>ðŸ‘¥ {stats.total} leads</span>
+                <span>👥 {stats.total} leads</span>
               )}
             </div>
             <button
               className={`campaign-card__btn ${c.id === selectedCampaignId ? 'campaign-card__btn--active' : ''}`}
               onClick={(e) => { e.stopPropagation(); onSelect(c.id); }}
             >
-              {c.id === selectedCampaignId ? 'âœ“ Currently Viewing' : 'View Campaign â†’'}
+              {c.id === selectedCampaignId ? '✓ Currently Viewing' : 'View Campaign →'}
             </button>
           </motion.div>
         ))}
@@ -1259,13 +1259,13 @@ function CampaignsPage({ campaigns, selectedCampaignId, onSelect, stats, loading
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    KEYWORDS MODAL (Glassmorphism)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function KeywordsModal({ data, onClose }) {
   const isExclude = data.type === 'exclude';
   const colorVar = isExclude ? 'var(--red)' : 'var(--emerald)';
-  const icon = isExclude ? 'ðŸš« Exclude Keywords' : 'ðŸ”‘ Include Keywords';
+  const icon = isExclude ? '🚫 Exclude Keywords' : '🔑 Include Keywords';
 
   // Split and clean keywords
   const keywordsList = (data.keywords || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -1328,7 +1328,7 @@ function KeywordsModal({ data, onClose }) {
             onMouseOver={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 20%, transparent)`}
             onMouseOut={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 10%, transparent)`}
           >
-            ðŸ“‹ Copy Raw String
+            📋 Copy Raw String
           </button>
         )}
       </motion.div>
@@ -1336,9 +1336,9 @@ function KeywordsModal({ data, onClose }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════
    FILTERS PAGE
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════ */
 function FiltersPage() {
   const [filters, setFilters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1383,17 +1383,17 @@ function FiltersPage() {
                 {filters.map((f) => (
                   <tr key={f.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{f.campaign_number || 'â€”'}</div>
-                      <div className="niche-tag" style={{ marginTop: 4 }}>{f.niche || 'â€”'}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-1)' }}>{f.campaign_number || '—'}</div>
+                      <div className="niche-tag" style={{ marginTop: 4 }}>{f.niche || '—'}</div>
                     </td>
                     <td>
-                      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>ðŸ“ {f.location || 'â€”'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>ðŸ‘¥ {f.employees || 'â€”'}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>📍 {f.location || '—'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>👥 {f.employees || '—'}</div>
                     </td>
                     <td style={{ fontSize: 12, color: 'var(--text-2)', maxWidth: 200, lineHeight: '1.5' }}>
                       {f.industry ? <div style={{ marginBottom: 4 }}><strong style={{color:'var(--text-3)'}}>Inc:</strong> {f.industry}</div> : null}
                       {f.exclude_industry ? <div><strong style={{color:'var(--text-3)'}}>Exc:</strong> <span style={{color:'var(--red)'}}>{f.exclude_industry}</span></div> : null}
-                      {!f.industry && !f.exclude_industry && 'â€”'}
+                      {!f.industry && !f.exclude_industry && '—'}
                     </td>
                     <td style={{ display: 'flex', gap: 8, alignItems: 'center', height: '100%', padding: '16px 12px' }}>
                       <button 
@@ -1402,7 +1402,7 @@ function FiltersPage() {
                         style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
                         title="View Included Keywords"
                       >
-                        ðŸ”‘ Include
+                        🔑 Include
                       </button>
                       <button 
                         onClick={() => setModalData({ type: 'exclude', keywords: f.exclude_keywords })}
@@ -1410,7 +1410,7 @@ function FiltersPage() {
                         style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
                         title="View Excluded Keywords"
                       >
-                        ðŸš« Exclude
+                        🚫 Exclude
                       </button>
                     </td>
                   </tr>
@@ -1428,9 +1428,9 @@ function FiltersPage() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   INBOX PAGE â€” FULL CINEMATIC + FUNCTIONAL SIGNAL CENTER
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   INBOX PAGE — FULL CINEMATIC + FUNCTIONAL SIGNAL CENTER
+   ═══════════════════════════════════════════════════════════ */
 function InboxPage() {
   const [replies, setReplies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1452,7 +1452,7 @@ function InboxPage() {
 
   useEffect(() => { loadReplies(); }, [loadReplies]);
 
-  // Realtime subscription â€” new replies appear instantly
+  // Realtime subscription — new replies appear instantly
   useEffect(() => {
     const channel = supabase
       .channel('inbox-realtime')
@@ -1490,7 +1490,7 @@ function InboxPage() {
     const posCount = positive.filter(w => text.includes(w)).length;
     const negCount = negative.filter(w => text.includes(w)).length;
     if (negCount > 0) return { label: 'Not Interested', score: Math.max(5, 30 - negCount * 15), color: 'var(--red)' };
-    if (posCount >= 3) return { label: 'Hot Lead ðŸ”¥', score: Math.min(98, 75 + posCount * 5), color: 'var(--emerald)' };
+    if (posCount >= 3) return { label: 'Hot Lead 🔥', score: Math.min(98, 75 + posCount * 5), color: 'var(--emerald)' };
     if (posCount >= 1) return { label: 'Positive Signal', score: Math.min(85, 55 + posCount * 10), color: 'var(--cyan)' };
     return { label: 'Neutral', score: 45, color: 'var(--amber)' };
   };
@@ -1501,7 +1501,7 @@ function InboxPage() {
       {/* COLUMN 1: Sender accounts */}
       <div className="inbox-sidebar glass-card" style={{ borderRadius: 14 }}>
         <div className="inbox-sidebar-header">
-          <span>ðŸ“¡ SMTP Inboxes</span>
+          <span>📡 SMTP Inboxes</span>
           <span style={{ fontSize: 10, color: 'var(--emerald)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <span className="pulse-dot" />Live
           </span>
@@ -1522,7 +1522,7 @@ function InboxPage() {
                 >
                   <div className="inbox-account-dot" style={{ background: selectedAccount === acc ? 'var(--cyan)' : undefined }} />
                   <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 12 }}>
-                    {acc === 'All' ? 'ðŸŒ All Inboxes' : acc}
+                    {acc === 'All' ? '🌐 All Inboxes' : acc}
                   </span>
                   {count > 0 && <span className="inbox-count-badge">{count}</span>}
                 </button>
@@ -1535,7 +1535,7 @@ function InboxPage() {
       {/* COLUMN 2: Message list */}
       <div className="inbox-list glass-card" style={{ borderRadius: 14, padding: 0, overflow: 'hidden' }}>
         <div className="inbox-list-header">
-          <span>ðŸ’¬ Replies</span>
+          <span>💬 Replies</span>
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{filtered.length} messages</span>
         </div>
         <div className="inbox-list-scroll">
@@ -1610,20 +1610,20 @@ function InboxPage() {
                     {(selectedMsg.first_name || selectedMsg.name || '?').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="inbox-detail-name">{selectedMsg.first_name || selectedMsg.name || 'â€”'}</div>
+                    <div className="inbox-detail-name">{selectedMsg.first_name || selectedMsg.name || '—'}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{selectedMsg.job_title || 'Contact'}</div>
                   </div>
                 </div>
                 <div className="inbox-detail-meta">
                   <span><Mail size={11} style={{ opacity: 0.5 }} />{selectedMsg.email}</span>
-                  <span><Building2 size={11} style={{ opacity: 0.5 }} />{selectedMsg.company_name || selectedMsg.company || 'â€”'}</span>
+                  <span><Building2 size={11} style={{ opacity: 0.5 }} />{selectedMsg.company_name || selectedMsg.company || '—'}</span>
                   {(selectedMsg.niche_tag || selectedMsg.niche) && (
                     <span className="niche-tag" style={{ marginTop: 0 }}>{selectedMsg.niche_tag || selectedMsg.niche}</span>
                   )}
                 </div>
                 <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="status-dot" style={{ background: 'var(--emerald)' }} />
-                  Received by: <strong style={{ color: 'var(--text-2)' }}>{selectedMsg.cold_email_sender || selectedMsg.sender || 'â€”'}</strong>
+                  Received by: <strong style={{ color: 'var(--text-2)' }}>{selectedMsg.cold_email_sender || selectedMsg.sender || '—'}</strong>
                   {selectedMsg.replied_at && (
                     <span style={{ marginLeft: 'auto' }}>
                       <Clock size={10} style={{ opacity: 0.5, marginRight: 3, verticalAlign: 'middle' }} />
@@ -1670,7 +1670,7 @@ function InboxPage() {
               {/* Context: our outreach message */}
               {(selectedMsg.cold_email_subject || selectedMsg.cold_email_body) && (
                 <div className="inbox-context-wrap">
-                  <div className="inbox-context-label">ðŸ“¤ Our Original Outreach</div>
+                  <div className="inbox-context-label">📤 Our Original Outreach</div>
                   {selectedMsg.cold_email_subject && (
                     <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
                       Subject: <span style={{ color: 'var(--text-2)' }}>{selectedMsg.cold_email_subject}</span>
@@ -1684,7 +1684,7 @@ function InboxPage() {
 
               {/* Reply body with CyberScramble */}
               <div className="inbox-reply-wrap" style={{ flex: 1, overflow: 'auto' }}>
-                <div className="inbox-context-label" style={{ color: 'var(--emerald)', marginBottom: 10 }}>ðŸ’¬ Their Reply</div>
+                <div className="inbox-context-label" style={{ color: 'var(--emerald)', marginBottom: 10 }}>💬 Their Reply</div>
                 <div className="inbox-detail-body" style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 10, padding: 16, minHeight: 80 }}>
                   {selectedMsg.reply_message
                     ? <CyberScramble text={selectedMsg.reply_message} trigger={scrambleTrigger} duration={600} />
@@ -1702,21 +1702,21 @@ function InboxPage() {
                     disabled={updatingId === selectedMsg.id}
                     onClick={() => handleAction(selectedMsg.id, 'interested')}
                   >
-                    âœ… Mark Interested
+                    ✅ Mark Interested
                   </button>
                   <button
                     className="inbox-action-btn inbox-action-btn--purple"
                     disabled={updatingId === selectedMsg.id}
                     onClick={() => handleAction(selectedMsg.id, 'meeting_booked')}
                   >
-                    ðŸ“… Meeting Booked
+                    📅 Meeting Booked
                   </button>
                   <button
                     className="inbox-action-btn inbox-action-btn--red"
                     disabled={updatingId === selectedMsg.id}
                     onClick={() => handleAction(selectedMsg.id, 'archived')}
                   >
-                    ðŸ—‘ï¸ Archive
+                    🗑️ Archive
                   </button>
                 </div>
               </div>
@@ -1736,9 +1736,9 @@ function InboxPage() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   ANALYTICS PAGE â€” ADVANCED DATA VISUALIZATION
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════
+   ANALYTICS PAGE — ADVANCED DATA VISUALIZATION
+   ═══════════════════════════════════════════════════════════ */
 function AnalyticsPage({ leads = [] }) {
   // 1. Niche A/B Warfare
   const nicheStats = useMemo(() => {
@@ -1791,7 +1791,7 @@ function AnalyticsPage({ leads = [] }) {
   }, [leads]);
 
   const sentimentChartData = {
-    labels: ['Hot Leads ðŸ”¥', 'Positive', 'Neutral', 'Not Interested'],
+    labels: ['Hot Leads 🔥', 'Positive', 'Neutral', 'Not Interested'],
     datasets: [{
       data: [sentimentStats.hot, sentimentStats.positive, sentimentStats.neutral, sentimentStats.notInterested],
       backgroundColor: ['rgba(16,185,129,0.9)', 'rgba(6,182,212,0.8)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)'],
@@ -1882,7 +1882,7 @@ function AnalyticsPage({ leads = [] }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
         
         <SpotlightCard className="glass-card" style={{ gridColumn: '1 / -1' }}>
-          <div className="card-title">âš”ï¸ Niche A/B Warfare</div>
+          <div className="card-title">⚔️ Niche A/B Warfare</div>
           <div className="card-subtitle">Compare performance and conversion velocity across your target niches</div>
           <div style={{ height: 280, marginTop: 16 }}>
             {nicheStats.length > 0 ? (
@@ -1892,7 +1892,7 @@ function AnalyticsPage({ leads = [] }) {
         </SpotlightCard>
 
         <SpotlightCard className="glass-card">
-          <div className="card-title">â° Golden Hours Heatmap</div>
+          <div className="card-title">⏰ Golden Hours Heatmap</div>
           <div className="card-subtitle">Correlation between Email Sent Time and Reply Time</div>
           <div style={{ height: 240, marginTop: 16 }}>
             {heatmapData.length > 0 ? (
@@ -1902,7 +1902,7 @@ function AnalyticsPage({ leads = [] }) {
         </SpotlightCard>
 
         <SpotlightCard className="glass-card">
-          <div className="card-title">ðŸ§  Sentiment Quality Funnel</div>
+          <div className="card-title">🧠 Sentiment Quality Funnel</div>
           <div className="card-subtitle">AI analysis of reply intent to gauge copy effectiveness</div>
           <div style={{ height: 240, marginTop: 16 }}>
             {(sentimentStats.hot + sentimentStats.positive + sentimentStats.neutral + sentimentStats.notInterested) > 0 ? (
@@ -1912,14 +1912,14 @@ function AnalyticsPage({ leads = [] }) {
         </SpotlightCard>
 
         <SpotlightCard className="glass-card" style={{ gridColumn: '1 / -1' }}>
-          <div className="card-title">ðŸŒ Geographic Hit Rate</div>
+          <div className="card-title">🌍 Geographic Hit Rate</div>
           <div className="card-subtitle">Top performing locations (populates automatically for new leads)</div>
           <div style={{ marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {geoStats.length > 0 ? (
               geoStats.map(g => (
                 <div key={g.loc} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '12px 16px', borderRadius: 12, minWidth: 160 }}>
                   <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-1)' }}>{g.count} <span style={{fontSize: 12, fontWeight: 400, color: 'var(--text-3)'}}>Leads</span></div>
-                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>ðŸ“ {g.loc}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>📍 {g.loc}</div>
                 </div>
               ))
             ) : (
@@ -1934,68 +1934,10 @@ function AnalyticsPage({ leads = [] }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   APP ROOT
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-export default 
 /* ═══════════════════════════════════════════════════════════
-   NOTE MODAL (الملقط)
+   APP ROOT
    ═══════════════════════════════════════════════════════════ */
-function NoteModal({ lead, onClose, onSave }) {
-  const [note, setNote] = useState(lead?.manual_note || '');
-  const [color, setColor] = useState(lead?.note_color || 'blue');
-  const [saving, setSaving] = useState(false);
-
-  if (!lead) return null;
-
-  const handleSave = async () => {
-    setSaving(true);
-    await onSave(lead.id, note, color);
-    setSaving(false);
-  };
-
-  const getHex = (c) => c === 'red' ? '#ef4444' : c === 'green' ? '#10b981' : '#3b82f6';
-
-  return (
-    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 99999 }}>
-      <motion.div className="intel-panel" onClick={e => e.stopPropagation()} initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} style={{ maxWidth: 420, height: 'auto', position: 'relative', margin: 'auto', top: '15vh', padding: 24, borderRadius: 16 }}>
-        <button className="intel-close" onClick={onClose}><X size={16} /></button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div className="intel-avatar" style={{ background: 'var(--glass-2)' }}>
-            <Paperclip size={20} color={getHex(color)} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0 }}>Attach Note</h2>
-            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{lead.first_name || 'Client'} • {lead.company_name || lead.company || 'Company'}</div>
-          </div>
-        </div>
-
-        <textarea
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="Type your note here... (e.g., Call back next Monday, Hot lead!)"
-          style={{ width: '100%', height: 120, background: 'var(--bg-2)', border: '1px solid var(--glass-3)', borderRadius: 8, padding: 12, color: '#fff', fontSize: 13, resize: 'none', marginBottom: 16, outline: 'none' }}
-        />
-
-        <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-          {['red', 'green', 'blue'].map(c => (
-            <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--text-2)' }}>
-              <input type="radio" name="noteColor" value={c} checked={color === c} onChange={() => setColor(c)} style={{ display: 'none' }} />
-              <div style={{ width: 16, height: 16, borderRadius: '50%', border: color === c ? '2px solid #fff' : '2px solid transparent', background: getHex(c), outline: '2px solid transparent', outlineOffset: 2, boxShadow: color === c ? '0 0 10px ' + getHex(c) : 'none', transition: 'all 0.2s' }} />
-              {c === 'red' ? 'Urgent / Hot' : c === 'green' ? 'Positive / Follow-up' : 'General Note'}
-            </label>
-          ))}
-        </div>
-
-        <button onClick={handleSave} disabled={saving} style={{ width: '100%', background: 'var(--accent)', color: '#fff', border: 'none', padding: '12px 0', borderRadius: 8, fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }}>
-          {saving ? 'Saving...' : 'Save Note'}
-        </button>
-      </motion.div>
-    </div>
-  );
-}
-
-function App() {
+export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -2004,25 +1946,7 @@ function App() {
   const [campaign, setCampaign] = useState(null);
   const [stats, setStats] = useState({ total: 0, sent: 0, followups: 0, replied: 0, interested: 0, meeting_booked: 0, archived: 0 });
   const [leads, setLeads] = useState([]);
-    const [selectedLead, setSelectedLead] = useState(null);
-  const [noteModalLead, setNoteModalLead] = useState(null);
-
-  const handleDeleteLead = async (leadId, e) => {
-    if(e) e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return;
-    try {
-      await supabase.from('leads').delete().eq('id', leadId);
-      setLeads(prev => prev.filter(l => l.id !== leadId));
-    } catch(err) { console.error('Delete error', err); }
-  };
-
-  const handleSaveNote = async (leadId, note, color) => {
-    try {
-      await supabase.from('leads').update({ manual_note: note, note_color: color }).eq('id', leadId);
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, manual_note: note, note_color: color } : l));
-      setNoteModalLead(null);
-    } catch(err) { console.error('Save note error', err); }
-  };
+  const [selectedLead, setSelectedLead] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -2072,9 +1996,9 @@ function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
@@ -2084,7 +2008,7 @@ function App() {
       case 'filters':
         return <FiltersPage />;
       case 'agents':
-        return <ComingSoonPage icon={<Bot size={40} />} title="AI Agents" desc="Configure and monitor your AI agents â€” reply detection, follow-up engine, archive cleaner, and more." />;
+        return <ComingSoonPage icon={<Bot size={40} />} title="AI Agents" desc="Configure and monitor your AI agents — reply detection, follow-up engine, archive cleaner, and more." />;
       case 'automations':
         return <ComingSoonPage icon={<Cpu size={40} />} title="Automations" desc="Manage your n8n workflows, triggers, and automation sequences directly from this panel." />;
       case 'settings':
@@ -2140,4 +2064,3 @@ function App() {
     </>
   );
 }
-
