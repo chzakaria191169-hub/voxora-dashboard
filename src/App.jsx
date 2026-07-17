@@ -1350,11 +1350,54 @@ function KeywordsModal({ data, onClose }) {
   const colorVar = isExclude ? 'var(--red)' : 'var(--emerald)';
   const icon = isExclude ? '🚫 Exclude Keywords' : '🔑 Include Keywords';
 
-  // Split and clean keywords
-  const keywordsList = (data.keywords || '').split(',').map(s => s.trim()).filter(Boolean);
+  // Local Storage Key
+  const storageKey = `voxora_filter_${data.id}_${data.type}`;
+
+  // Default List from DB
+  const defaultKeywords = useMemo(() => {
+    return (data.keywords || '').split(',').map(s => s.trim()).filter(Boolean);
+  }, [data.keywords]);
+
+  // State initialized from Local Storage or DB
+  const [keywordsList, setKeywordsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return defaultKeywords;
+  });
+
+  const [newTag, setNewTag] = useState('');
+
+  const saveToLocal = (newList) => {
+    setKeywordsList(newList);
+    localStorage.setItem(storageKey, JSON.stringify(newList));
+  };
+
+  const removeTag = (index) => {
+    const newList = [...keywordsList];
+    newList.splice(index, 1);
+    saveToLocal(newList);
+  };
+
+  const addTag = (e) => {
+    if (e.key === 'Enter' && newTag.trim()) {
+      const val = newTag.trim();
+      if (!keywordsList.includes(val)) {
+        const newList = [...keywordsList, val];
+        saveToLocal(newList);
+      }
+      setNewTag('');
+    }
+  };
+
+  const handleReset = () => {
+    localStorage.removeItem(storageKey);
+    setKeywordsList(defaultKeywords);
+  };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(data.keywords || '');
+    navigator.clipboard.writeText(keywordsList.join(', '));
   };
 
   return (
@@ -1384,7 +1427,7 @@ function KeywordsModal({ data, onClose }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer' }}><X size={16} /></button>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: '50vh', overflowY: 'auto', paddingRight: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: '40vh', overflowY: 'auto', paddingRight: 8 }}>
           {keywordsList.length === 0 ? (
             <span style={{ color: 'var(--text-3)', fontSize: 13 }}>No keywords provided.</span>
           ) : (
@@ -1392,28 +1435,70 @@ function KeywordsModal({ data, onClose }) {
               <span key={i} style={{
                 background: `color-mix(in srgb, ${colorVar} 15%, transparent)`,
                 border: `1px solid color-mix(in srgb, ${colorVar} 30%, transparent)`,
-                color: colorVar, padding: '4px 10px', borderRadius: 6, fontSize: 12
+                color: colorVar, padding: '4px 8px 4px 10px', borderRadius: 6, fontSize: 12,
+                display: 'flex', alignItems: 'center', gap: 6
               }}>
                 {kw}
+                <button 
+                  onClick={() => removeTag(i)} 
+                  style={{ background: 'none', border: 'none', color: colorVar, opacity: 0.7, cursor: 'pointer', padding: 0, display: 'flex' }}
+                  onMouseOver={(e) => e.currentTarget.style.opacity = 1}
+                  onMouseOut={(e) => e.currentTarget.style.opacity = 0.7}
+                >
+                  <X size={12} />
+                </button>
               </span>
             ))
           )}
         </div>
 
-        {keywordsList.length > 0 && (
+        <input 
+          type="text" 
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          onKeyDown={addTag}
+          placeholder="Type a new keyword and press Enter..."
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '10px 12px',
+            borderRadius: 8,
+            color: 'var(--text-1)',
+            fontSize: 13,
+            outline: 'none',
+            marginTop: 4
+          }}
+        />
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          {keywordsList.length > 0 && (
+            <button
+              onClick={handleCopy}
+              style={{
+                flex: 1, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: `color-mix(in srgb, ${colorVar} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${colorVar} 40%, transparent)`, color: colorVar,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 20%, transparent)`}
+              onMouseOut={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 10%, transparent)`}
+            >
+              📋 Copy Raw String
+            </button>
+          )}
           <button
-            onClick={handleCopy}
+            onClick={handleReset}
             style={{
-              marginTop: 8, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              background: `color-mix(in srgb, ${colorVar} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${colorVar} 40%, transparent)`, color: colorVar,
+              padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s'
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 20%, transparent)`}
-            onMouseOut={(e) => e.currentTarget.style.background = `color-mix(in srgb, ${colorVar} 10%, transparent)`}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+            title="Reset to Database Default"
           >
-            📋 Copy Raw String
+            <RefreshCw size={14} />
           </button>
-        )}
+        </div>
       </motion.div>
     </>
   );
@@ -1480,7 +1565,7 @@ function FiltersPage() {
                     </td>
                     <td style={{ display: 'flex', gap: 8, alignItems: 'center', height: '100%', padding: '16px 12px' }}>
                       <button 
-                        onClick={() => setModalData({ type: 'include', keywords: f.keywords })}
+                        onClick={() => setModalData({ id: f.id, type: 'include', keywords: f.keywords })}
                         className="msg-btn msg-btn--has" 
                         style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
                         title="View Included Keywords"
@@ -1488,7 +1573,7 @@ function FiltersPage() {
                         🔑 Include
                       </button>
                       <button 
-                        onClick={() => setModalData({ type: 'exclude', keywords: f.exclude_keywords })}
+                        onClick={() => setModalData({ id: f.id, type: 'exclude', keywords: f.exclude_keywords })}
                         className="msg-btn msg-btn--has" 
                         style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.2)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, width: 'auto' }}
                         title="View Excluded Keywords"
