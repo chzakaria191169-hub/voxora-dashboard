@@ -1962,7 +1962,7 @@ function AnalyticsPage({ leads = [] }) {
 /* ═══════════════════════════════════════════════════════════
    APP ROOT
    ═══════════════════════════════════════════════════════════ */
-export default /* ═══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    NOTE MODAL (الملقط)
    ═══════════════════════════════════════════════════════════ */
 function NoteModal({ lead, onClose, onSave }) {
@@ -2019,7 +2019,7 @@ function NoteModal({ lead, onClose, onSave }) {
   );
 }
 
-function App() {
+export default function App() {
   const [activePage, setActivePage] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
