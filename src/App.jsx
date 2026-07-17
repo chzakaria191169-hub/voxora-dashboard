@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Linkedin
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -993,6 +993,7 @@ function LeadIntelPanel({ lead, onClose }) {
           <div className="intel-avatar">{initials}</div>
           <div className="intel-header-info">
             <div className="intel-name">{lead.first_name || '—'}</div>
+            {lead.job_title && <div className="intel-job-title-header">{lead.job_title}</div>}
             <div className="intel-email">{lead.email}</div>
           </div>
           <button className="intel-close" onClick={onClose}><X size={16} /></button>
@@ -1006,14 +1007,25 @@ function LeadIntelPanel({ lead, onClose }) {
                 <Building2 size={14} style={{ color: 'var(--purple-bright)', flexShrink: 0 }} />
                 <div>
                   <div className="intel-company-name">{lead.company_name || lead.company || '—'}</div>
-                  {lead.job_title && <div className="intel-job-title">{lead.job_title}</div>}
+                  {lead.location && (
+                    <div className="intel-location">
+                      <MapPin size={11} /> {lead.location}
+                    </div>
+                  )}
                 </div>
               </div>
-              {lead.website && (
-                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="intel-website-btn">
-                  <Globe size={11} /> Visit Site <ExternalLink size={10} />
-                </a>
-              )}
+              <div className="intel-company-actions">
+                {lead.linkedin && (
+                  <a href={lead.linkedin.startsWith('http') ? lead.linkedin : `https://${lead.linkedin}`} target="_blank" rel="noreferrer" className="intel-linkedin-btn">
+                    <Linkedin size={11} /> LinkedIn <ExternalLink size={10} />
+                  </a>
+                )}
+                {lead.website && (
+                  <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="intel-website-btn">
+                    <Globe size={11} /> Visit Site <ExternalLink size={10} />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
