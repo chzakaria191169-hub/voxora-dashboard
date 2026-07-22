@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Bell, Star
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Bell, Star, Plus, Check
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -721,7 +721,7 @@ function ComingSoonPage({ icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar, customReplyTypes, onAddCustomReplyType }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
   const initialSentCount = stats.sent + stats.followups + stats.replied + stats.interested + stats.meeting_booked;
 
@@ -838,7 +838,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} customReplyTypes={customReplyTypes} onAddCustomReplyType={onAddCustomReplyType} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
             Showing 20 of {leads.length} leads — go to Leads page for full list
@@ -1112,9 +1112,118 @@ function LeadIntelPanel({ lead, onClose }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   REPLY TYPE SELECTOR (Custom + Standard)
+   ═══════════════════════════════════════════════════════════ */
+function ReplyTypeSelector({ lead, onUpdateWorkspace, setExpanded, customReplyTypes, onAddCustomReplyType }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newVal, setNewVal] = useState('');
+
+  const defaultTypes = ['Standard', 'Contact Changed', 'Out of Office', 'Not Interested'];
+  
+  const allOptions = Array.from(new Set([
+    ...defaultTypes,
+    ...(customReplyTypes || []),
+    ...(lead.reply_type ? [lead.reply_type] : [])
+  ]));
+
+  const handleSaveCustom = () => {
+    const trimmed = newVal.trim();
+    if (trimmed) {
+      onAddCustomReplyType(trimmed);
+      onUpdateWorkspace(lead.id, { reply_type: trimmed });
+    }
+    setIsAdding(false);
+    setNewVal('');
+  };
+
+  if (isAdding) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+        <input
+          type="text"
+          autoFocus
+          value={newVal}
+          onChange={e => setNewVal(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleSaveCustom();
+            if (e.key === 'Escape') setIsAdding(false);
+          }}
+          placeholder="New reply type..."
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--purple-bright)',
+            borderRadius: 6,
+            color: 'var(--text-1)',
+            fontSize: 11,
+            padding: '3px 6px',
+            width: 110,
+            outline: 'none'
+          }}
+        />
+        <button
+          onClick={handleSaveCustom}
+          style={{ background: 'var(--purple-bright)', border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', padding: '3px 5px', display: 'flex', alignItems: 'center' }}
+          title="Save custom reply type"
+        >
+          <Check size={12} />
+        </button>
+        <button
+          onClick={() => setIsAdding(false)}
+          style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 4, color: 'var(--text-3)', cursor: 'pointer', padding: '3px 5px', display: 'flex', alignItems: 'center' }}
+          title="Cancel"
+        >
+          <X size={12} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+      <select 
+        className="reply-type-select" 
+        value={lead.reply_type || 'Standard'}
+        onChange={(e) => {
+          if (e.target.value === '__add_custom__') {
+            setIsAdding(true);
+          } else {
+            onUpdateWorkspace(lead.id, { reply_type: e.target.value });
+            if (e.target.value === 'Contact Changed') setExpanded(prev => ({ ...prev, [lead.id]: true }));
+          }
+        }}
+        style={{ maxWidth: 130 }}
+      >
+        {allOptions.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+        <option value="__add_custom__" style={{ fontWeight: 600, color: 'var(--purple-bright)' }}>+ Add Custom...</option>
+      </select>
+      <button
+        onClick={() => setIsAdding(true)}
+        style={{
+          background: 'rgba(139,92,246,0.15)',
+          border: '1px solid rgba(139,92,246,0.3)',
+          borderRadius: 4,
+          color: 'var(--purple-bright)',
+          cursor: 'pointer',
+          padding: '4px 5px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s'
+        }}
+        title="Add custom reply type"
+      >
+        <Plus size={12} />
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
    ═══════════════════════════════════════════════════════════ */
-function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
+function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar, customReplyTypes, onAddCustomReplyType }) {
   const [expanded, setExpanded] = useState({});
 
   const toggleExpand = (id, e) => {
@@ -1199,20 +1308,13 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
                   </td>
                   <td><StatusBadge status={lead.status} /></td>
                   <td>
-                    <select 
-                      className="reply-type-select" 
-                      value={lead.reply_type}
-                      onChange={(e) => {
-                        onUpdateWorkspace(lead.id, { reply_type: e.target.value });
-                        if(e.target.value === 'Contact Changed') setExpanded(prev => ({ ...prev, [lead.id]: true }));
-                      }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <option value="Standard">Standard</option>
-                      <option value="Contact Changed">Contact Changed</option>
-                      <option value="Out of Office">Out of Office</option>
-                      <option value="Not Interested">Not Interested</option>
-                    </select>
+                    <ReplyTypeSelector
+                      lead={lead}
+                      onUpdateWorkspace={onUpdateWorkspace}
+                      setExpanded={setExpanded}
+                      customReplyTypes={customReplyTypes}
+                      onAddCustomReplyType={onAddCustomReplyType}
+                    />
                   </td>
                   <td><span style={{ fontSize: 11, color: 'var(--text-2)' }}>{lead.sender || lead.cold_email_sender || '—'}</span></td>
                   <td style={{ fontSize: 11, color: 'var(--text-3)' }}>
@@ -1264,7 +1366,7 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
 /* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
    ═══════════════════════════════════════════════════════════ */
-function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
+function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar, customReplyTypes, onAddCustomReplyType }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -1320,7 +1422,7 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} customReplyTypes={customReplyTypes} onAddCustomReplyType={onAddCustomReplyType} />
       </div>
     </motion.div>
   );
@@ -2406,6 +2508,26 @@ export default function App() {
     });
   }, []);
 
+  const [customReplyTypes, setCustomReplyTypes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('voxora_custom_reply_types');
+      return saved ? JSON.parse(saved) : [];
+    } catch(e) {
+      return [];
+    }
+  });
+
+  const handleAddCustomReplyType = useCallback((newType) => {
+    setCustomReplyTypes(prev => {
+      if (prev.includes(newType)) return prev;
+      const next = [...prev, newType];
+      try {
+        localStorage.setItem('voxora_custom_reply_types', JSON.stringify(next));
+      } catch(e) {}
+      return next;
+    });
+  }, []);
+
   const campaignsRef = useRef(campaigns);
 
   useEffect(() => {
@@ -2640,9 +2762,9 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} customReplyTypes={customReplyTypes} onAddCustomReplyType={handleAddCustomReplyType} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} customReplyTypes={customReplyTypes} onAddCustomReplyType={handleAddCustomReplyType} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
