@@ -929,45 +929,56 @@ function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFut
 function LeadIntelPanel({ lead, onClose }) {
   if (!lead) return null;
 
-  const statusOrder = ['cold_email_sent', 'follow_up_1_sent', 'follow_up_2_sent', 'follow_up_3_sent', 'archived', 'replied', 'bounced'];
-  const currentIdx = statusOrder.indexOf(lead.status);
+  const followupCount = lead.followup_count || 0;
+  const status = lead.status || '';
+
+  const fu1Sent = followupCount >= 1 || status === 'followup_1' || status === 'follow_up_1_sent' || status === 'followup_2' || status === 'follow_up_2_sent' || status === 'followup_3' || status === 'follow_up_3_sent' || status === 'archived' || status === 'replied';
+  const fu2Sent = followupCount >= 2 || status === 'followup_2' || status === 'follow_up_2_sent' || status === 'followup_3' || status === 'follow_up_3_sent' || status === 'archived';
+  const fu3Sent = followupCount >= 3 || status === 'followup_3' || status === 'follow_up_3_sent' || status === 'archived';
+
+  const firstName = lead.first_name || 'there';
+  const companyName = lead.company || lead.company_name || 'your company';
 
   const steps = [
     {
       key: 'cold_email_sent',
       label: 'Cold Email',
       color: 'var(--purple)',
-      subject: lead.cold_email_subject,
-      body: lead.cold_email_body || lead.message,
+      subject: lead.cold_email_subject || 'Quick question',
+      body: lead.cold_email_body || lead.message || 'Hi,\n\nEvery week, projects get awarded before many contractors even know the opportunity exists.',
       sender: lead.cold_email_sender || lead.sender,
       sentAt: lead.cold_email_sent_at || lead.sent_at,
+      isSent: true
     },
     {
       key: 'follow_up_1_sent',
       label: 'Follow-up 1',
       color: 'var(--cyan)',
-      subject: lead.follow_up_1_subject,
-      body: lead.follow_up_1_body,
-      sender: lead.follow_up_1_sender,
-      sentAt: lead.follow_up_1_sent_at,
+      subject: lead.follow_up_1_subject || 'Re: Quick question',
+      body: lead.follow_up_1_body || `Hi ${firstName},\n\nJust wanted to bring this back to the top of your inbox in case it got buried.\n\nWould it make sense to send over the quick 2-minute breakdown I mentioned?`,
+      sender: lead.follow_up_1_sender || lead.sender,
+      sentAt: lead.follow_up_1_sent_at || (fu1Sent ? lead.sent_at : null),
+      isSent: fu1Sent
     },
     {
       key: 'follow_up_2_sent',
       label: 'Follow-up 2',
       color: 'var(--amber)',
-      subject: lead.follow_up_2_subject,
-      body: lead.follow_up_2_body,
-      sender: lead.follow_up_2_sender,
-      sentAt: lead.follow_up_2_sent_at,
+      subject: lead.follow_up_2_subject || 'Worth sending this over?',
+      body: lead.follow_up_2_body || `Hi ${firstName},\n\nOne thing we've noticed is that the companies consistently winning more opportunities usually aren't doing anything radically different.\n\nThey're simply getting in front of the right decision-makers earlier than everyone else.\n\nThat's exactly what the 2-minute breakdown I mentioned is designed to show.\n\nHappy to send it over if you're curious.`,
+      sender: lead.follow_up_2_sender || lead.sender,
+      sentAt: lead.follow_up_2_sent_at || (fu2Sent ? lead.sent_at : null),
+      isSent: fu2Sent
     },
     {
       key: 'follow_up_3_sent',
       label: 'Follow-up 3',
       color: 'var(--emerald)',
-      subject: lead.follow_up_3_subject,
-      body: lead.follow_up_3_body,
-      sender: lead.follow_up_3_sender,
-      sentAt: lead.follow_up_3_sent_at,
+      subject: lead.follow_up_3_subject || 'Should I close this out?',
+      body: lead.follow_up_3_body || `Hi ${firstName},\n\nI'll assume the timing isn't right, so this will be my last email.\n\nIf getting in front of more qualified opportunities becomes a priority later on, just reply with:\n\nInfo\n\nand I'll send over the 2-minute breakdown.\n\nEither way, wishing you and everyone at ${companyName} continued success.`,
+      sender: lead.follow_up_3_sender || lead.sender,
+      sentAt: lead.follow_up_3_sent_at || (fu3Sent ? lead.sent_at : null),
+      isSent: fu3Sent
     },
   ];
 
@@ -1077,25 +1088,25 @@ function LeadIntelPanel({ lead, onClose }) {
           <div className="intel-section">
             <div className="intel-section-title">Outreach Timeline</div>
             <div className="intel-timeline">
-              {steps.map((step, i) => {
-                const isSent = step.sentAt != null;
-                const isFuture = !isSent;
-                return (
-                  <TimelineItem
-                    key={step.key}
-                    label={step.label}
-                    color={step.color}
-                    subject={step.subject}
-                    body={step.body}
-                    sender={step.sender}
-                    sentAt={step.sentAt}
-                    isFuture={isFuture}
-                    delay={i * 0.07}
-                  />
-                );
-              })}
+              {steps.map((step, i) => (
+                <TimelineItem
+                  key={step.key}
+                  label={step.label}
+                  color={step.color}
+                  subject={step.subject}
+                  body={step.body}
+                  sender={step.sender}
+                  sentAt={step.sentAt}
+                  isFuture={!step.isSent}
+                  delay={i * 0.07}
+                />
+              ))}
             </div>
           </div>
+
+        </div>
+      </motion.div>
+    </AnimatePresence>
 
         </div>
       </motion.div>
