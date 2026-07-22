@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Send, Inbox, Settings,
   Cpu, Zap, BarChart2, TrendingUp, Activity, Bot,
   ChevronDown, Search, RefreshCw, Filter, Tag, Mail, X, Clock, Building2,
-  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Bell
+  ExternalLink, Globe, Briefcase, Target, ChevronRight, CheckCircle2, Circle, Terminal, Trash2, Paperclip, MapPin, Bell, Star
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -721,7 +721,7 @@ function ComingSoonPage({ icon, title, desc }) {
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD PAGE
    ═══════════════════════════════════════════════════════════ */
-function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
+function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
 
   const chartData = {
@@ -737,7 +737,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, padding: 12, cornerRadius: 10 } },
     scales: {
-      y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', precision: 0, font: { size: 11 } }, border: { display: false } },
+      y: { beginAtZero: true, suggestedMax: 3000, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', precision: 0, font: { size: 11 } }, border: { display: false } },
       x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { display: false } },
     },
   };
@@ -837,7 +837,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
             </div>
           </div>
         </div>
-        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} />
+        <LeadsTable leads={leads.slice(0, 20)} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} />
         {leads.length > 20 && (
           <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: 12 }}>
             Showing 20 of {leads.length} leads — go to Leads page for full list
@@ -1113,13 +1113,24 @@ function LeadIntelPanel({ lead, onClose }) {
 /* ═══════════════════════════════════════════════════════════
    LEADS TABLE (reusable)
    ═══════════════════════════════════════════════════════════ */
-function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
+function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
   const [expanded, setExpanded] = useState({});
 
   const toggleExpand = (id, e) => {
     if(e) e.stopPropagation();
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const sortedLeads = useMemo(() => {
+    if (!starredIds || starredIds.size === 0) return leads;
+    return [...leads].sort((a, b) => {
+      const aStarred = starredIds.has(a.id) || a.is_starred;
+      const bStarred = starredIds.has(b.id) || b.is_starred;
+      if (aStarred && !bStarred) return -1;
+      if (!aStarred && bStarred) return 1;
+      return 0;
+    });
+  }, [leads, starredIds]);
 
   if (loading) return <div className="empty-state">Loading leads...</div>;
   if (leads.length === 0) return <div className="empty-state">No leads found for this campaign yet.</div>;
@@ -1128,28 +1139,39 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
       <table className="leads-table">
         <thead>
           <tr>
-            <th style={{ width: 40, padding: '12px 16px' }}></th>
+            <th style={{ width: 60, padding: '12px 16px', textAlign: 'center' }}></th>
             <th>Name</th><th>Company</th><th>Email</th>
             <th>Status</th><th style={{ width: 140 }}>Reply Type</th><th>Sender</th><th>Last Sent</th><th className="col-sticky" style={{ textAlign: 'center', minWidth: 100 }}>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {leads.map((lead, i) => {
+          {sortedLeads.map((lead, i) => {
             const lastSentAt = lead.follow_up_3_sent_at || lead.follow_up_2_sent_at || lead.follow_up_1_sent_at || lead.cold_email_sent_at || lead.sent_at;
             const hasMsgs = !!(lead.cold_email_body || lead.message || lead.follow_up_1_body || lead.follow_up_2_body || lead.follow_up_3_body);
             const hasContacts = lead.contacts && lead.contacts.length > 0;
             const isExpanded = expanded[lead.id];
+            const isStarred = starredIds && starredIds.has(lead.id);
             
             return (
               <React.Fragment key={lead.id}>
                 <tr onClick={() => onLeadClick && onLeadClick(lead)} style={{ cursor: 'pointer' }} className={isExpanded ? 'row-expanded' : ''}>
-                  <td style={{ textAlign: 'center', padding: '14px 16px' }}>
-                    <button 
-                      className="expand-arrow"
-                      onClick={(e) => toggleExpand(lead.id, e)}
-                    >
-                      {isExpanded ? '▼' : '▶'}
-                    </button>
+                  <td style={{ textAlign: 'center', padding: '14px 8px', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <button 
+                        className="expand-arrow"
+                        onClick={(e) => toggleExpand(lead.id, e)}
+                      >
+                        {isExpanded ? '▼' : '▶'}
+                      </button>
+                      <button
+                        className="star-btn"
+                        title={isStarred ? "Unstar VIP lead" : "Star VIP lead (Pin to top)"}
+                        onClick={(e) => { e.stopPropagation(); onToggleStar && onToggleStar(lead.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        <Star size={15} color={isStarred ? "#f59e0b" : "var(--text-3)"} fill={isStarred ? "#f59e0b" : "none"} style={{ opacity: isStarred ? 1 : 0.35, transition: 'all 0.2s' }} />
+                      </button>
+                    </div>
                   </td>
                   <td className="lead-name">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1241,7 +1263,7 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
 /* ═══════════════════════════════════════════════════════════
    LEADS PAGE (full list with search + filter)
    ═══════════════════════════════════════════════════════════ */
-function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact }) {
+function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [nicheFilter, setNicheFilter] = useState('all');
@@ -1297,7 +1319,7 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       </div>
 
       <div className="glass-card table-card" style={{ marginTop: 0 }}>
-        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} />
+        <LeadsTable leads={filtered} loading={loading} onLeadClick={onLeadClick} onDeleteLead={onDeleteLead} onNoteClick={onNoteClick} onUpdateWorkspace={onUpdateWorkspace} onAddContact={onAddContact} onUpdateContact={onUpdateContact} starredIds={starredIds} onToggleStar={onToggleStar} />
       </div>
     </motion.div>
   );
@@ -2358,6 +2380,31 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  const [starredIds, setStarredIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('voxora_starred_leads');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  const handleToggleStar = useCallback((leadId) => {
+    setStarredIds(prev => {
+      const next = new Set(prev);
+      if (next.has(leadId)) {
+        next.delete(leadId);
+      } else {
+        next.add(leadId);
+      }
+      try {
+        localStorage.setItem('voxora_starred_leads', JSON.stringify([...next]));
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
   const campaignsRef = useRef(campaigns);
 
   useEffect(() => {
@@ -2539,9 +2586,9 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} />;
+        return <DashboardPage stats={stats} leads={leads} loading={loading} campaign={campaign} campaigns={campaigns} selectedCampaignId={selectedCampaignId} onCampaignChange={handleCampaignChange} onRefresh={() => loadCampaignData(selectedCampaignId, true)} refreshing={refreshing} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} />;
       case 'leads':
-        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} />;
+        return <LeadsPage leads={leads} loading={loading} campaign={campaign} onLeadClick={setSelectedLead} onDeleteLead={handleDeleteLead} onNoteClick={setNoteModalLead} onUpdateWorkspace={handleUpdateWorkspace} onAddContact={handleAddContact} onUpdateContact={handleUpdateContact} starredIds={starredIds} onToggleStar={handleToggleStar} />;
       case 'campaigns':
         return <CampaignsPage campaigns={campaigns} selectedCampaignId={selectedCampaignId} onSelect={handleCampaignChange} stats={stats} loading={loading} />;
       case 'analytics':
