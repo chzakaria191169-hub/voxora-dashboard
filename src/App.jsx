@@ -1107,10 +1107,6 @@ function LeadIntelPanel({ lead, onClose }) {
         </div>
       </motion.div>
     </AnimatePresence>
-
-        </div>
-      </motion.div>
-    </AnimatePresence>
   );
 }
 
