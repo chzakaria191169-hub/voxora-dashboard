@@ -738,7 +738,7 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, padding: 12, cornerRadius: 10 } },
     scales: {
-      y: { beginAtZero: true, suggestedMax: 3000, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', precision: 0, font: { size: 11 } }, border: { display: false } },
+      y: { beginAtZero: true, suggestedMax: 1500, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#475569', precision: 0, font: { size: 11 } }, border: { display: false } },
       x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 11 } }, border: { display: false } },
     },
   };
