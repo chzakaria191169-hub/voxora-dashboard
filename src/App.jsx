@@ -723,11 +723,12 @@ function ComingSoonPage({ icon, title, desc }) {
    ═══════════════════════════════════════════════════════════ */
 function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCampaignId, onCampaignChange, onRefresh, refreshing, onLeadClick, onDeleteLead, onNoteClick, onUpdateWorkspace, onAddContact, onUpdateContact, starredIds, onToggleStar }) {
   const replyRate = stats.total > 0 ? Math.round(((stats.replied + stats.interested + stats.meeting_booked) / stats.total) * 100) : 0;
+  const initialSentCount = stats.sent + stats.followups + stats.replied + stats.interested + stats.meeting_booked;
 
   const chartData = {
     labels: ['Sent', 'Follow-up', 'Replied', 'Interested', 'Meeting'],
     datasets: [{
-      data: [stats.sent, stats.followups, stats.replied, stats.interested, stats.meeting_booked],
+      data: [initialSentCount, stats.followups, stats.replied, stats.interested, stats.meeting_booked],
       backgroundColor: ['rgba(139,92,246,0.5)', 'rgba(245,158,11,0.5)', 'rgba(6,182,212,0.5)', 'rgba(139,92,246,0.7)', 'rgba(16,185,129,0.6)'],
       borderColor: ['rgba(139,92,246,0.9)', 'rgba(245,158,11,0.9)', 'rgba(6,182,212,0.9)', 'rgba(139,92,246,1)', 'rgba(16,185,129,0.9)'],
       borderWidth: 1, borderRadius: 8,
