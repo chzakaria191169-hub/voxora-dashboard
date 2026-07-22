@@ -2418,7 +2418,60 @@ export default function App() {
       Notification.requestPermission();
     }
 
-    const audio = new Audio('/notification.mp3');
+    const playCoinCashRegisterSound = () => {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          const ctx = new AudioContext();
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+
+          // Coin 1: High metallic ping (987 Hz - B5)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(987.77, ctx.currentTime);
+          gain1.gain.setValueAtTime(0.4, ctx.currentTime);
+          gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(ctx.currentTime);
+          osc1.stop(ctx.currentTime + 0.35);
+
+          // Coin 2: "Ching!" (1318.51 Hz - E6)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1318.51, ctx.currentTime + 0.08);
+          gain2.gain.setValueAtTime(0.6, ctx.currentTime + 0.08);
+          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(ctx.currentTime + 0.08);
+          osc2.stop(ctx.currentTime + 0.6);
+
+          // Shimmer: High metallic harmonic (2637 Hz - E7)
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'triangle';
+          osc3.frequency.setValueAtTime(2637, ctx.currentTime + 0.1);
+          gain3.gain.setValueAtTime(0.25, ctx.currentTime + 0.1);
+          gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc3.connect(gain3);
+          gain3.connect(ctx.destination);
+          osc3.start(ctx.currentTime + 0.1);
+          osc3.stop(ctx.currentTime + 0.5);
+        }
+      } catch (e) {
+        console.log('Web Audio synth error:', e);
+      }
+
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(e => console.log('Audio mp3 play failed:', e));
+      } catch (e) {}
+    };
 
     const channel = supabase
       .channel('schema-db-changes')
@@ -2438,8 +2491,8 @@ export default function App() {
             const clientName = lead.first_name || 'Client';
             const companyName = lead.company || 'Company';
             
-            // Play Sound
-            audio.play().catch(e => console.log('Audio play failed:', e));
+            // Play Money / Coin Sound
+            playCoinCashRegisterSound();
             
             const title = `New Reply from ${clientName}`;
             const body = `${companyName} — ${campName}`;
