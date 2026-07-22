@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from './supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -1247,7 +1248,12 @@ function LeadsPage({ leads, loading, campaign, onLeadClick, onDeleteLead, onNote
       (l.company_name || '').toLowerCase().includes(search.toLowerCase()) ||
       (l.company || '').toLowerCase().includes(search.toLowerCase()) ||
       (l.email || '').toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || l.status === statusFilter;
+    const matchStatus = statusFilter === 'all' ||
+      l.status === statusFilter ||
+      (statusFilter === 'cold_email_sent' && l.status === 'sent') ||
+      (statusFilter === 'follow_up_1_sent' && l.status === 'followup_1') ||
+      (statusFilter === 'follow_up_2_sent' && l.status === 'followup_2') ||
+      (statusFilter === 'follow_up_3_sent' && l.status === 'followup_3');
     const matchNiche = nicheFilter === 'all' || l.niche_tag === nicheFilter || l.niche === nicheFilter;
     return matchSearch && matchStatus && matchNiche;
   });
@@ -2138,9 +2144,61 @@ function InlineEditable({ value, onSave, placeholder = '—' }) {
   );
 }
 
+function ComposeContactModal({ contact, onClose, onSave }) {
+  const draftKey = `draft_${contact.id}`;
+  const [draft, setDraft] = useState(() => {
+    const saved = localStorage.getItem(draftKey);
+    return saved ? JSON.parse(saved) : { subject: '', body: '', scheduled_at: '' };
+  });
+
+  const handleSave = () => {
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+    onSave();
+    onClose();
+  };
+
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <motion.div className="intel-panel" onClick={e => e.stopPropagation()} initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} style={{ maxWidth: 500, width: '100%', maxHeight: '90vh', overflowY: 'auto', position: 'relative', padding: 24, borderRadius: 16 }}>
+        <button className="intel-close" onClick={onClose}><X size={16} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <div className="intel-avatar" style={{ background: 'var(--glass-2)' }}>
+            <Mail size={20} color="var(--purple)" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0 }}>Compose Email</h2>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>To: {contact.name} {contact.email ? `(${contact.email})` : ''}</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>Schedule Time</label>
+          <input type="datetime-local" value={draft.scheduled_at} onChange={e => setDraft({...draft, scheduled_at: e.target.value})} style={{ width: '100%', background: 'var(--bg-2)', border: '1px solid var(--glass-3)', borderRadius: 8, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }} />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>Subject</label>
+          <input type="text" placeholder="Email Subject" value={draft.subject} onChange={e => setDraft({...draft, subject: e.target.value})} style={{ width: '100%', background: 'var(--bg-2)', border: '1px solid var(--glass-3)', borderRadius: 8, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }} />
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>Message Body</label>
+          <textarea value={draft.body} onChange={e => setDraft({...draft, body: e.target.value})} placeholder="Write your message here..." style={{ width: '100%', height: 160, background: 'var(--bg-2)', border: '1px solid var(--glass-3)', borderRadius: 8, padding: 12, color: '#fff', fontSize: 13, resize: 'none', outline: 'none' }} />
+        </div>
+
+        <button onClick={handleSave} style={{ width: '100%', background: 'var(--purple)', color: '#fff', border: 'none', padding: '12px 0', borderRadius: 8, fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }}>
+          Save to Drafts
+        </button>
+      </motion.div>
+    </div>,
+    document.body
+  );
+}
+
 function SubContactsPanel({ lead, onAddContact, onUpdateContact }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', email: '', position: '', status: 'Not Contacted', priority: 'Medium' });
+  const [composeContact, setComposeContact] = useState(null);
 
   const handleSaveNew = async () => {
     if (!newContact.name) return;
@@ -2158,7 +2216,7 @@ function SubContactsPanel({ lead, onAddContact, onUpdateContact }) {
         <table className="sub-contacts-table">
           <thead>
             <tr>
-              <th>Name</th><th>Position</th><th>Email</th><th>Status</th><th>Priority</th>
+              <th>Name</th><th>Position</th><th>Email</th><th>Status</th><th>Priority</th><th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2176,6 +2234,16 @@ function SubContactsPanel({ lead, onAddContact, onUpdateContact }) {
                   <select value={c.priority} onChange={e => onUpdateContact(c.id, { priority: e.target.value })} className="sub-select">
                     <option>High</option><option>Medium</option><option>Low</option>
                   </select>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <button 
+                    onClick={() => setComposeContact(c)}
+                    className="action-btn" 
+                    title="Compose Email"
+                    style={{ background: 'rgba(139, 92, 246, 0.1)', color: 'var(--purple)', border: '1px solid rgba(139, 92, 246, 0.2)' }}
+                  >
+                    <Mail size={14} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -2197,6 +2265,17 @@ function SubContactsPanel({ lead, onAddContact, onUpdateContact }) {
       ) : (
         <button className="btn-add-contact" onClick={() => setShowAdd(true)}>+ Add Contact</button>
       )}
+
+      {/* Compose Email Modal for Referred Contact */}
+      <AnimatePresence>
+        {composeContact && (
+          <ComposeContactModal 
+            contact={composeContact} 
+            onClose={() => setComposeContact(null)} 
+            onSave={() => {}} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
