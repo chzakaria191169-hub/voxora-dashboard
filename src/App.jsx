@@ -529,6 +529,36 @@ function AnimCounter({ value, loading }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   REPLY ATTRIBUTION HELPERS
+   ═══════════════════════════════════════════════════════════ */
+export function getRepliedStep(lead) {
+  if (!lead) return null;
+  const ws = lead.lead_workspace && lead.lead_workspace.length > 0 ? lead.lead_workspace[0] : null;
+  if (ws && ws.replied_step) return ws.replied_step;
+  if (lead.replied_step) return lead.replied_step;
+
+  const fc = lead.followup_count || 0;
+  if (fc === 0) return 'Cold Email';
+  if (fc === 1) return 'Follow-up 1';
+  if (fc === 2) return 'Follow-up 2';
+  return 'Follow-up 3';
+}
+
+function ReplyStepBadge({ lead }) {
+  if (!lead || (lead.status !== 'replied' && !lead.replied_at)) return null;
+  const step = getRepliedStep(lead);
+  
+  const stepClass = step === 'Follow-up 1' ? 'step-fu1' : step === 'Follow-up 2' ? 'step-fu2' : step === 'Follow-up 3' ? 'step-fu3' : 'step-cold';
+  const icon = step === 'Follow-up 1' ? '⚡' : step === 'Follow-up 2' ? '💥' : step === 'Follow-up 3' ? '🎯' : '📧';
+
+  return (
+    <span className={`reply-step-badge ${stepClass}`} title={`Replied to ${step}`}>
+      <span>{icon}</span> {step}
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    STATUS BADGE
    ═══════════════════════════════════════════════════════════ */
 function StatusBadge({ status }) {
@@ -852,8 +882,8 @@ function DashboardPage({ stats, leads, loading, campaign, campaigns, selectedCam
 /* ═══════════════════════════════════════════════════════════
    OUTREACH TIMELINE ITEM
    ═══════════════════════════════════════════════════════════ */
-function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFuture, delay = 0 }) {
-  const [expanded, setExpanded] = useState(false);
+function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFuture, delay = 0, isConvertedStep = false }) {
+  const [expanded, setExpanded] = useState(isConvertedStep);
   const hasMeta = subject || body || sender || sentAt;
 
   return (
@@ -888,6 +918,13 @@ function TimelineItem({ step, label, color, subject, body, sender, sentAt, isFut
             </motion.span>
           )}
         </div>
+
+        {isConvertedStep && (
+          <div className="converted-timeline-banner">
+            <CheckCircle2 size={12} color="#6ee7b7" />
+            <span>✨ Converted Here! Lead replied after this email</span>
+          </div>
+        )}
 
         <AnimatePresence>
           {expanded && (
@@ -1077,8 +1114,9 @@ function LeadIntelPanel({ lead, onClose }) {
             </div>
           )}
 
-          <div className="intel-section" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="intel-section" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <StatusBadge status={lead.status} />
+            <ReplyStepBadge lead={lead} />
             {lead.replied_at && (
               <span style={{ fontSize: 11, color: 'var(--emerald)', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <CheckCircle2 size={11} /> Replied {new Date(lead.replied_at).toLocaleDateString()}
@@ -1089,19 +1127,30 @@ function LeadIntelPanel({ lead, onClose }) {
           <div className="intel-section">
             <div className="intel-section-title">Outreach Timeline</div>
             <div className="intel-timeline">
-              {steps.map((step, i) => (
-                <TimelineItem
-                  key={step.key}
-                  label={step.label}
-                  color={step.color}
-                  subject={step.subject}
-                  body={step.body}
-                  sender={step.sender}
-                  sentAt={step.sentAt}
-                  isFuture={!step.isSent}
-                  delay={i * 0.07}
-                />
-              ))}
+              {steps.map((step, i) => {
+                const winningStep = (lead.status === 'replied' || lead.replied_at) ? getRepliedStep(lead) : null;
+                const isConvertedStep = Boolean(
+                  (step.key === 'cold' && winningStep === 'Cold Email') ||
+                  (step.key === 'fu1' && winningStep === 'Follow-up 1') ||
+                  (step.key === 'fu2' && winningStep === 'Follow-up 2') ||
+                  (step.key === 'fu3' && winningStep === 'Follow-up 3')
+                );
+
+                return (
+                  <TimelineItem
+                    key={step.key}
+                    label={step.label}
+                    color={step.color}
+                    subject={step.subject}
+                    body={step.body}
+                    sender={step.sender}
+                    sentAt={step.sentAt}
+                    isFuture={!step.isSent}
+                    delay={i * 0.07}
+                    isConvertedStep={isConvertedStep}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -1306,7 +1355,12 @@ function LeadsTable({ leads, loading, onLeadClick, onDeleteLead, onNoteClick, on
                   <td className="lead-email">
                     <InlineEditable value={lead.display_email} onSave={(val) => onUpdateWorkspace(lead.id, { display_email: val })} placeholder={lead.email || '—'} />
                   </td>
-                  <td><StatusBadge status={lead.status} /></td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <StatusBadge status={lead.status} />
+                      <ReplyStepBadge lead={lead} />
+                    </div>
+                  </td>
                   <td>
                     <ReplyTypeSelector
                       lead={lead}
@@ -2162,6 +2216,27 @@ function AnalyticsPage({ leads = [] }) {
     },
   };
 
+  // 4. Reply Step Attribution Matrix
+  const replyAttributionStats = useMemo(() => {
+    const map = { 'Cold Email': 0, 'Follow-up 1': 0, 'Follow-up 2': 0, 'Follow-up 3': 0 };
+    leads.filter(l => l.status === 'replied' || l.replied_at || l.status === 'interested' || l.status === 'meeting_booked').forEach(l => {
+      const step = getRepliedStep(l);
+      if (map[step] !== undefined) map[step]++;
+      else map['Cold Email']++;
+    });
+    return map;
+  }, [leads]);
+
+  const replyAttributionChartData = {
+    labels: ['Cold Email 📧', 'Follow-up 1 ⚡', 'Follow-up 2 💥', 'Follow-up 3 🎯'],
+    datasets: [{
+      label: 'Replies Generated',
+      data: [replyAttributionStats['Cold Email'], replyAttributionStats['Follow-up 1'], replyAttributionStats['Follow-up 2'], replyAttributionStats['Follow-up 3']],
+      backgroundColor: ['rgba(139,92,246,0.8)', 'rgba(245,158,11,0.8)', 'rgba(236,72,153,0.8)', 'rgba(16,185,129,0.8)'],
+      borderRadius: 6
+    }]
+  };
+
   const pieOpts = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { position: 'right', labels: { color: '#94A3B8', usePointStyle: true, padding: 20 } }, tooltip: { backgroundColor: 'rgba(7,7,21,0.95)', titleColor: '#F8FAFC', bodyColor: '#94A3B8', padding: 12, cornerRadius: 10 } },
@@ -2194,6 +2269,14 @@ function AnalyticsPage({ leads = [] }) {
             {nicheStats.length > 0 ? (
               <Bar data={nicheChartData} options={chartOpts} />
             ) : <div className="empty-state" style={{ height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}>Not enough data yet</div>}
+          </div>
+        </SpotlightCard>
+
+        <SpotlightCard className="glass-card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card-title">🎯 Reply Attribution Matrix (مصدر الردود)</div>
+          <div className="card-subtitle">Exact breakdown of which email touchpoint triggered client replies across your campaigns</div>
+          <div style={{ height: 260, marginTop: 16 }}>
+            <Bar data={replyAttributionChartData} options={chartOpts} />
           </div>
         </SpotlightCard>
 
